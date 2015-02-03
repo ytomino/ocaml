@@ -46,17 +46,19 @@ else
 fi
 
 Tml_files="$Pbase.ml"
-Tmli_files=""
-Tmll_files=""
-Tmly_files=""
+Tmli_files=
+Tmll_files=
+Tmly_files=
 
 Ttests="Tbyte_compile_run Topt_compile_run"
 
 Tcompflags=
 Tbyteflags=
 Toptflags=
-Tlexflags=""
-Tyaccflags=""
+Tlexflags=
+Tyaccflags=
+
+Texec_env=
 
 # Log the command and execute it
 Plog () {
@@ -112,11 +114,22 @@ Tbyte_run () {
         -custom) runtime=;;
         *) runtime=$Pocamlrun;;
     esac
-    Plogr $runtime `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Plogr $Texec_env $runtime `Tprint_command` \
+          '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Topt_run () {
-    Plogr `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Plogr $Texec_env `Tprint_command` \
+          '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+}
+
+Tmultiple () {
+    command="$1"
+    shift
+    for i in $*; do
+        eval "${command}_$i () { Pbase=\"\$Pbase-$i\"; $command; }"
+        Ttests="$Ttests ${command}_$i"
+    done
 }
 
 Tbyte_compile_run () {

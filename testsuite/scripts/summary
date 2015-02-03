@@ -19,7 +19,12 @@ function error(msg) {
 /@@_.*@@_.*@@_/ { error("too many markers"); next; }
 /@@_testing.*@@_pass/ { ++npass; next; }
 /@@_testing.*@@_skip/ { ++nskip; next; }
-/@@_testing.*@@_FAIL/ { failed[nfail++] = $0; next; }
+/@@_testing.*@@_FAIL/ {
+    sub(/@@_testing/, "");
+    sub(/@@_FAIL/, "");
+    failed[nfail++] = $0;
+    next;
+}
 /@@_/ { error("orphan marker"); next; }
 
 END {
