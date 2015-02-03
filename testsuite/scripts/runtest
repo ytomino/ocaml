@@ -1,0 +1,219 @@
+#!/bin/bash
+
+#########################################################################
+#                                                                       #
+#                                 OCaml                                 #
+#                                                                       #
+#                Damien Doligez, Jane Street Capital                    #
+#                                                                       #
+#   Copyright 2014 Institut National de Recherche en Informatique et    #
+#   en Automatique.  All rights reserved.  This file is distributed     #
+#   under the terms of the Q Public License version 1.0.                #
+#                                                                       #
+#########################################################################
+
+Pfile="$1"
+Pdir="`dirname $1`"
+Pbase="`basename $1 .t`"
+
+if $SUPPORTS_SHARED_LIBRARIES; then
+  Pcustom=
+else
+  Pcustom=-custom
+fi
+Pocamlrun="$TOPDIR/boot/ocamlrun$EXE"
+Pflags="-nostdlib -I $OTOPDIR/stdlib"
+Pocamlc="$Pocamlrun $OTOPDIR/ocamlc $Pcustom $Pflags"
+Pocamlopt="$Pocamlrun $OTOPDIR/ocamlopt $Pflags"
+Pocaml="$Pocamlrun $OTOPDIR/ocaml $Pflags \
+        -init $OTOPDIR/testsuite/scripts/empty"
+Pocamldoc="$Pocamlrun $OTOPDIR/ocamldoc/ocamldoc"
+Plex="$Pocamlrun $OTOPDIR/lex/ocamllex"
+Pyacc="$TOPDIR/yacc/ocamlyacc$EXE"
+Pocamlmklib="$Pocamlrun $OTOPDIR/tools/ocamlmklib \
+             -ocamlc '$OTOPDIR/boot/ocamlrun$EXE $OTOPDIR/ocamlc $Pflags' \
+             -ocamlopt '$OTOPDIR/boot/ocamlrun$EXE $OTOPDIR/ocamlopt $Pflags'"
+if [ "$ARCH" = none -o "$ASM" = none ]; then
+  Pwith_asm=false
+else
+  Pwith_asm=true
+fi
+
+Tml_files="$Pbase.ml"
+Tmli_files=""
+Tmll_files=""
+Tmly_files=""
+
+Ttests="Tbyte_compile_run Topt_compile_run"
+
+Tcompflags=
+Tbyteflags=
+Toptflags=
+Tlexflags=""
+Tyaccflags=""
+
+Plog () {
+    echo "$*" >&2
+    eval "$*"
+}
+
+Tlex_yacc_gen () {
+    for f in $Tmll_files; do
+        Plog $Plex $Tlexflags $f
+    done
+    for f in $Tmly_files; do
+        Plog $Pyacc $Tyaccflags $f
+    done
+}
+
+Tbyte_compile () {
+    Tprepare
+    Tlex_yacc_gen
+    Plog $Pocamlc $Tcompflags $Tbyteflags $Tmli_files $Tml_files -o $Pbase.exe
+}
+
+Topt_compile () {
+    Tprepare
+    Tlex_yacc_gen
+    Plog $Pocamlopt $Tcompflags $Toptflags $Tmli_files $Tml_files -o $Pbase.exe
+}
+
+Tprint_command_default () {
+    if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
+    if [ -f $Pbase.args ]; then args="`cat $Pbase.args`"; else args=""; fi
+    echo ./$Pbase.exe $args '<'$infile
+}
+
+Psave_result () {
+    result=$?
+    case $result in
+        0) : >$Pbase.tmp_exit;;
+        *) echo $result >$Pbase.tmp_exit;;
+    esac
+}
+
+Tbyte_run () {
+    Plog $Pocamlrun `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Psave_result
+}
+
+Topt_run () {
+    Plog `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Psave_result
+}
+
+Tbyte_compile_run () {
+    Tbyte_compile
+    Tbyte_run
+}
+
+Topt_compile_run () {
+    Topt_compile
+    Topt_run
+}
+
+Tcompare_files_default () {
+    ref="$1"
+    act="$2"
+    if [ ! -f "$ref" ]; then ref=/dev/null; fi
+    Tpostprocess "$act" > "${act}_pp"
+    Plog cmp "$ref" "${act}_pp"
+}
+
+Tpostprocess_none () {
+    cat "$1"
+}
+
+Tpostprocess_sort () {
+    Plog sort "$1"
+}
+
+Tpostprocess_sort_uniq () {
+    Plog sort "$1" '|' uniq
+}
+
+Tpostcheck_default () {
+    for suff in out err exit; do
+        Tcompare_files $Pbase.$suff $Pbase.tmp_$suff
+    done
+}
+
+Tprecheck_default () {
+    case $Pwith_asm/$Tcommand in
+        false/Topt_*) false;;
+        *) true;;
+    esac
+}
+
+#override me
+Tprepare () {
+    :
+}
+
+# override me
+Tprint_command () {
+    Tprint_command_default
+}
+
+# override me
+Tcompare_files () {
+    Tcompare_files_default "$@"
+}
+
+#override me
+Tpostprocess () {
+    Tpostprocess_none "$@"
+}
+
+#override me
+Tpostcheck () {
+    Tpostcheck_default
+}
+
+#override me
+Tprecheck () {
+    Tprecheck_default
+}
+
+Pexport_variables () {
+    export OCAMLYACC="$Pyacc"
+    export OCAMLLEX="$Plex"
+    export OCAMLC="$Pocamlc"
+    export OCAMLRUN="$Pocamlrun"
+}
+
+Pstart_test () {
+    printf "@@_testing %s with %s..." "$Pfile" "$Tcommand" >&3
+}
+
+Pskip_test () {
+    printf "@@_skip\n" >&3
+    exit 0
+}
+
+Pfail_test () {
+    printf "@@_FAIL\n" >&3
+    exit 0
+}
+
+Ppass_test () {
+    printf "@@_pass\n" >&3
+}
+
+cd "$Pdir"
+
+######################################################
+. $Pbase.t
+######################################################
+
+for Tcommand in $Ttests; do
+    Pstart_test
+    (
+        Tprecheck || Pskip_test
+        ( set -e; $Tcommand; Tpostcheck )
+        case $? in
+            0) Ppass_test;;
+            *) Pfail_test;;
+        esac
+    )
+done

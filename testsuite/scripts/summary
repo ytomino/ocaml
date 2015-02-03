@@ -1,0 +1,60 @@
+#########################################################################
+#                                                                       #
+#                                 OCaml                                 #
+#                                                                       #
+#                Damien Doligez, Jane Street Capital                    #
+#                                                                       #
+#   Copyright 2014 Institut National de Recherche en Informatique et    #
+#   en Automatique.  All rights reserved.  This file is distributed     #
+#   under the terms of the Q Public License version 1.0.                #
+#                                                                       #
+#########################################################################
+
+function error(msg) {
+  printf("unexpected error (%s) at line %d:\n", msg, NR);
+  printf("  %s\n", $0);
+  got_error = 1;
+}
+
+/@@_.*@@_.*@@_/ { error("too many markers"); next; }
+/@@_testing.*@@_pass/ { ++npass; next; }
+/@@_testing.*@@_skip/ { ++nskip; next; }
+/@@_testing.*@@_FAIL/ { failed[nfail++] = $0; next; }
+/@@_/ { error("orphan marker"); next; }
+
+END {
+  printf("\n");
+  printf("  tests passed:  %4d\n", npass);
+  printf("  tests skipped: %4d\n", nskip);
+  printf("  tests failed:  %4d\n", nfail);
+  if (expected != ""){
+      total = npass + nskip + nfail;
+      printf("  total..........%4d (expected %d)\n", total, expected);
+  }
+  printf("\n");
+
+  if (nfail > 0){
+    printf("Failed tests:\n");
+    for (i in failed){
+      printf("  %s\n", failed[i]);
+    }
+    printf("\nSOME TESTS FAILED\n\n");
+    result = 3;
+  }
+
+  if (expected != "" && total != expected) {
+    printf("ERROR: wrong number of test results\n\n");
+    result = 4;
+  }
+
+  if (got_error){
+    printf("ERROR: unexpected errors in test scripts\n\n");
+    result = 5;
+  }
+
+  if (result == 0){
+      printf("ALL TESTS PASSED\n\n");
+  }
+
+  exit(result);
+}
