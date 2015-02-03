@@ -20,7 +20,7 @@ for d in "$@"; do
 done
 
 if [ "$1" = "tests" ]; then
-    expected=`sed -e 2q num_tests`
+    expected=`sed -e 2q num-tests`
 else
     expected=""
 fi

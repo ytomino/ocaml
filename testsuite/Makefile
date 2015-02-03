@@ -101,3 +101,26 @@ clean:
 	  (cd `dirname $$f` && . `basename $$f`); \
 	done
 	rm _log _full-log
+
+#####
+# For compatibility with the old test makefile
+
+.PHONY: list
+list:
+	$(MAKE) file=$(FILE)
+
+.PHONY: one
+one:
+	$(MAKE) dir=$(DIR)
+
+.PHONY: promote
+promote:
+	@echo '"make promote" is deprecated, you must promote by hand'
+
+.PHONY: lib
+lib:
+	:
+
+.PHONY: report
+report:
+	awk -f scripts/summary _log expected=

@@ -5,3 +5,4 @@ lexcmm.ml
 *.s
 *.out
 *.out.dSYM
+*.tmp_*

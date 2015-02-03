@@ -15,15 +15,15 @@
 Pfile="$1"
 Pdir="`dirname $1`"
 Pbase="`basename $1 .t`"
+Pexec="$Pbase".exe
 
-if $SUPPORTS_SHARED_LIBRARIES; then
-  Pcustom=
-else
-  Pcustom=-custom
-fi
+# todo:
+# 1. make "custom" user-settable
+# 2. transmit the value of "custom" to Trun (if custom, do not use ocamlrun)
+
 Pocamlrun="$TOPDIR/boot/ocamlrun$EXE"
 Pflags="-nostdlib -I $OTOPDIR/stdlib"
-Pocamlc="$Pocamlrun $OTOPDIR/ocamlc $Pcustom $Pflags"
+Pocamlc="$Pocamlrun $OTOPDIR/ocamlc $Pflags"
 Pocamlopt="$Pocamlrun $OTOPDIR/ocamlopt $Pflags"
 Pocaml="$Pocamlrun $OTOPDIR/ocaml $Pflags \
         -init $OTOPDIR/testsuite/scripts/empty"
@@ -39,6 +39,12 @@ else
   Pwith_asm=true
 fi
 
+if $SUPPORTS_SHARED_LIBRARIES; then
+  Tcustom=
+else
+  Tcustom=-custom
+fi
+
 Tml_files="$Pbase.ml"
 Tmli_files=""
 Tmll_files=""
@@ -52,9 +58,25 @@ Toptflags=
 Tlexflags=""
 Tyaccflags=""
 
+# Log the command and execute it
 Plog () {
     echo "$*" >&2
     eval "$*"
+}
+
+# Same as Plog, but don't fail if the command fails, and save the
+# result code
+Plogr () {
+    echo "$*" >&2
+    (
+        set +e
+        eval "$*"
+        result=$?
+        case $result in
+            0) : >$Pbase.tmp_exit;;
+            *) echo $result >$Pbase.tmp_exit;;
+        esac
+    )
 }
 
 Tlex_yacc_gen () {
@@ -69,37 +91,32 @@ Tlex_yacc_gen () {
 Tbyte_compile () {
     Tprepare
     Tlex_yacc_gen
-    Plog $Pocamlc $Tcompflags $Tbyteflags $Tmli_files $Tml_files -o $Pbase.exe
+    Plog $Pocamlc $Tcompflags $Tcustom $Tbyteflags $Tmli_files $Tml_files \
+         -o $Pexec
 }
 
 Topt_compile () {
     Tprepare
     Tlex_yacc_gen
-    Plog $Pocamlopt $Tcompflags $Toptflags $Tmli_files $Tml_files -o $Pbase.exe
+    Plog $Pocamlopt $Tcompflags $Toptflags $Tmli_files $Tml_files -o $Pexec
 }
 
 Tprint_command_default () {
     if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
     if [ -f $Pbase.args ]; then args="`cat $Pbase.args`"; else args=""; fi
-    echo ./$Pbase.exe $args '<'$infile
-}
-
-Psave_result () {
-    result=$?
-    case $result in
-        0) : >$Pbase.tmp_exit;;
-        *) echo $result >$Pbase.tmp_exit;;
-    esac
+    echo ./$Pexec $args '<'$infile
 }
 
 Tbyte_run () {
-    Plog $Pocamlrun `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
-    Psave_result
+    case $Tcustom in
+        -custom) runtime=;;
+        *) runtime=$Pocamlrun;;
+    esac
+    Plogr $runtime `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Topt_run () {
-    Plog `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
-    Psave_result
+    Plogr `Tprint_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Tbyte_compile_run () {
@@ -134,7 +151,9 @@ Tpostprocess_sort_uniq () {
 
 Tpostcheck_default () {
     for suff in out err exit; do
-        Tcompare_files $Pbase.$suff $Pbase.tmp_$suff
+        if [ -f $Pbase.tmp_$suff ]; then
+            Tcompare_files $Pbase.$suff $Pbase.tmp_$suff
+        fi
     done
 }
 
@@ -210,6 +229,7 @@ for Tcommand in $Ttests; do
     Pstart_test
     (
         Tprecheck || Pskip_test
+        rm -f "$Pbase".tmp_*
         ( set -e; $Tcommand; Tpostcheck )
         case $? in
             0) Ppass_test;;
