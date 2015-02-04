@@ -1,2 +1,4 @@
+. Testcommon.sh
+
 cflags="mainarith.c"
-. _common.sh
+Targs="1 100 3.14159 2.71828"

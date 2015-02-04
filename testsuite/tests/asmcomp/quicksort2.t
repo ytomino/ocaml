@@ -1,2 +1,4 @@
+. Testcommon.sh
+
 cflags="-DSORT -DFUN=quicksort main.c"
-. _common.sh
+Targs=1000000

@@ -1,2 +1,4 @@
+. Testcommon.sh
+
 cflags="-DINT_INT -DFUN=fib main.c"
-. _common.sh
+Targs=15

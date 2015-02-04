@@ -92,15 +92,15 @@ all:
 clean:
 	find tests -name '*.t' | while read f; do \
 	  b=$${f%.t}; \
-	  rm -f $$b.exe $$b.tmp_*; \
+	  rm -f $$b.exe $$b.tmp_* $$b-*.tmp_*; \
 	  ( cd `dirname $$b` && \
             ( rm -f *.cm[aiostx] *.cmx[as] *.cmti *.$(O) *.$(SO) *.$(A); \
               rm -rf *.dSYM ) ); \
         done
 	find tests -name '*.clean' | while read f; do \
-	  (cd `dirname $$f` && . `basename $$f`); \
+	  (cd `dirname $$f` && . ./`basename $$f`); \
 	done
-	rm _log _full-log
+	rm -f _log _full-log
 
 #####
 # For compatibility with the old test makefile

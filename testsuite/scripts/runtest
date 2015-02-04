@@ -12,6 +12,8 @@
 #                                                                       #
 #########################################################################
 
+[ -z "$Tdebug" ] || set -x
+
 Pfile="$1"
 Pdir="`dirname $1`"
 Pbase="`basename $1 .t`"
@@ -59,6 +61,8 @@ Tlexflags=
 Tyaccflags=
 
 Texec_env=
+Targs=
+Texit=0
 
 # Log the command and execute it
 Plog () {
@@ -70,15 +74,8 @@ Plog () {
 # result code
 Plogr () {
     echo "$*" >&2
-    (
-        set +e
-        eval "$*"
-        result=$?
-        case $result in
-            0) : >$Pbase.tmp_exit;;
-            *) echo $result >$Pbase.tmp_exit;;
-        esac
-    )
+    Pactualexit=0
+    eval "$*" || Pactualexit=$?
 }
 
 Tlex_yacc_gen () {
@@ -105,8 +102,7 @@ Topt_compile () {
 
 Tprint_command_default () {
     if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
-    if [ -f $Pbase.args ]; then args="`cat $Pbase.args`"; else args=""; fi
-    echo ./$Pexec $args '<'$infile
+    echo ./$Pexec $Targs '<'$infile
 }
 
 Tbyte_run () {
@@ -114,20 +110,25 @@ Tbyte_run () {
         -custom) runtime=;;
         *) runtime=$Pocamlrun;;
     esac
-    Plogr $Texec_env $runtime `Tprint_command` \
-          '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Plog $Texec_env $runtime `Tprint_command` \
+         '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Topt_run () {
-    Plogr $Texec_env `Tprint_command` \
-          '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Plog $Texec_env `Tprint_command` \
+         '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Tmultiple () {
     command="$1"
     shift
     for i in $*; do
-        eval "${command}_$i () { Pbase=\"\$Pbase-$i\"; $command; }"
+        eval "${command}_$i () {
+            Targs=\"\$Targs_$i\";
+            Texit=\"\${Texit_$i:-0}\";
+            Pbase=\"\$Pbase-$i\";
+            $command;
+        }"
         Ttests="$Ttests ${command}_$i"
     done
 }
@@ -163,11 +164,16 @@ Tpostprocess_sort_uniq () {
 }
 
 Tpostcheck_default () {
-    for suff in out err exit; do
+    for suff in out err; do
         if [ -f $Pbase.tmp_$suff ]; then
             Tcompare_files $Pbase.$suff $Pbase.tmp_$suff
         fi
     done
+    [ "$Pactualexit" -eq "$Texit" ] || {
+        printf "ERROR: actual exit code %d is different from expected %d\n" \
+               $Pactualexit $Texit
+        false
+    }
 }
 
 Tprecheck_default () {
@@ -216,20 +222,25 @@ Pexport_variables () {
 
 Pstart_test () {
     printf "@@_testing %s with %s..." "$Pfile" "$Tcommand" >&3
+    printf "#################################################"
+    printf "\n@@_testing %s with %s...\n" "$Pfile" "$Tcommand"
 }
 
 Pskip_test () {
     printf "@@_skip\n" >&3
+    printf "@@_skip\n\n"
     exit 0
 }
 
 Pfail_test () {
     printf "@@_FAIL\n" >&3
+    printf "@@_FAIL\n\n"
     exit 0
 }
 
 Ppass_test () {
     printf "@@_pass\n" >&3
+    printf "@@_pass\n\n"
 }
 
 cd "$Pdir"
@@ -243,7 +254,13 @@ for Tcommand in $Ttests; do
     (
         Tprecheck || Pskip_test
         rm -f "$Pbase".tmp_*
-        ( set -e; $Tcommand; Tpostcheck )
+        Pactualexit=0
+        (
+            set -e
+            $Tcommand || Pactualexit=$?
+            echo Texit=$Texit
+            Tpostcheck
+        )
         case $? in
             0) Ppass_test;;
             *) Pfail_test;;

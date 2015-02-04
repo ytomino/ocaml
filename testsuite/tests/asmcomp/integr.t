@@ -1,2 +1,4 @@
+. Testcommon.sh
+
 cflags="-DINT_FLOAT -DFUN=test main.c"
-. _common.sh
+Targs=1000000
