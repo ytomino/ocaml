@@ -1,11 +1,11 @@
 Tcompflags=-g
-Texec_env=OCAMLRUNPARAM=b=1
+Texec_env=OCAMLRUNPARAM="${OCAMLRUNPARAM},b=1"
 
-Ttests=Tbyte_compile
-Tmultiple Tbyte_run a b c d none
-
-Ttests="$Ttests Topt_compile"
-Tmultiple Topt_run a b c d none
+# Watch out, the order here is relevant:
+Ttests=Tbyte_compile              # First compile with byte-code
+Tmultiple Tbyte_run a b c d none  # Then run byte-code tests
+Ttests="$Ttests Topt_compile"     # Then compile with native code
+Tmultiple Topt_run a b c d none   # Then run native tests
 
 Targs_a=a
 

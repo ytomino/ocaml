@@ -221,26 +221,26 @@ Pexport_variables () {
 }
 
 Pstart_test () {
-    printf "@@_testing %s with %s..." "$Pfile" "$Tcommand" >&3
+    printf "Testing %s with %s..." "$Pfile" "$Tcommand" >&3
     printf "#################################################"
-    printf "\n@@_testing %s with %s...\n" "$Pfile" "$Tcommand"
+    printf "\nTesting %s with %s...\n" "$Pfile" "$Tcommand"
 }
 
 Pskip_test () {
-    printf "@@_skip\n" >&3
-    printf "@@_skip\n\n"
+    printf "skip\n" >&3
+    printf "skip\n\n"
     exit 0
 }
 
 Pfail_test () {
-    printf "@@_FAIL\n" >&3
-    printf "@@_FAIL\n\n"
+    printf "FAIL\n" >&3
+    printf "FAIL\n\n"
     exit 0
 }
 
 Ppass_test () {
-    printf "@@_pass\n" >&3
-    printf "@@_pass\n\n"
+    printf "pass\n" >&3
+    printf "pass\n\n"
 }
 
 cd "$Pdir"
