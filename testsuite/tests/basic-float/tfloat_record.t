@@ -10,6 +10,5 @@
 #                                                                       #
 #########################################################################
 
-BASEDIR=../..
-include $(BASEDIR)/makefiles/Makefile.several
-include $(BASEDIR)/makefiles/Makefile.common
+Tml_files="float_record.ml tfloat_record.ml"
+Tmli_files=float_record.mli

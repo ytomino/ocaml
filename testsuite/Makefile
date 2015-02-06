@@ -11,12 +11,18 @@
 #########################################################################
 
 # usage:
+#
 # make file=<f>
-#   make tests in all the directories listed in file <f>
+#   run tests in all the directories listed in file <f>
+#
 # make dir=<d>
-#   make tests in directory <d>
-# make dir="<d1> ... <dn>"
-#   make tests in the directories <d1> to <dn>
+#   run tests in directory <d>
+#
+# make dir=<file>.t
+#   run the tests described by <file>.t
+#
+# make dir="<d1> ... <dn> <f1>.t ... <fn>.t"
+#   run tests in the directories <d1> to <dn> and in files <f1>.t ... <fn>.t
 
 ifeq "${file}" ""
   dir=tests
