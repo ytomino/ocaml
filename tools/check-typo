@@ -38,6 +38,8 @@
 # - Any file whose name matches one of the following patterns is
 #   automatically exempt from all rules
 #     *.reference
+#     *.out
+#     *.err
 #     */reference
 #     */.depend*
 # - Any file whose name begins with "Makefile" is automatically exempt
@@ -53,6 +55,7 @@
 # - Any file whose name matches the following pattern is automatically
 #   exempt from the "long-line" rule (but not from "very-long-line").
 #   */ocamldoc/*
+# - An empty file is exempt from the missing-header rule.
 
 # ASCII characters are bytes from 0 to 127.  Any other byte is
 # flagged as a non-ASCII character.
@@ -139,7 +142,7 @@ IGNORE_DIRS="
       Makefile*|*/Makefile*) rules="tab,$rules";;
       */.ignore) add_hd;;
       *.mlpack|*.mllib|*.mltop|*.odocl|*.itarget|*.clib) add_hd;;
-      *.reference|*/reference|*/.depend*) continue;;
+      *.reference|*.out|*.err|*/reference|*/.depend*) continue;;
     esac
     case "$f" in
       ocamldoc/*|*/ocamldoc/*) rules="long-line,$rules";;
@@ -169,7 +172,7 @@ IGNORE_DIRS="
           err("non-ascii", "non-ASCII character(s)");
         }
 
-        match($0, /[^\t\200-\377 -~]/) {
+        match($0, /[^\t\200-\377 -}~]/) {
           err("non-printing", "non-printing ASCII character(s)");
         }
 
@@ -223,7 +226,7 @@ IGNORE_DIRS="
           NR = 1;
           RSTART = 1;
           RLENGTH = 0;
-          if (!(header_ocaml && header_copyright)){
+          if (!empty_file && !(header_ocaml && header_copyright)){
             err("missing-header", "missing copyright header");
           }
           split(svnrules, r, "[, ]");
