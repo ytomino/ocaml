@@ -249,17 +249,30 @@ cd "$Pdir"
 . $Pbase.t
 ######################################################
 
-for Tcommand in $Ttests; do
+for kind in $kinds; do
     Pstart_test
     (
-        Tprecheck || Pskip_test
-        rm -f "$Pbase".tmp_*
-        Pactualexit=0
+        # Skip opt test if configured without native code
+        Pcheck_opt || Pskip_test
+        # Run user-defined pre-check
+        ${kind}_precheck || Pskip_test
+        rm -f _tmp/"$base".*
+        Pcompexit=0
+        Prunexit=0
+        Ppostexit=0
         (
-            set -e
-            $Tcommand || Pactualexit=$?
-            echo Texit=$Texit
-            Tpostcheck
+            # compile
+            Pcompexit=0
+            ${kind}_comp >_tmp/$base-comp.out 2>_tmp/$base-comp.err \
+              || Pcompexit=$?
+            # run
+            ${kind}_run >_tmp/$base.out 2>_tmp/$base.err || Prunexit=$?
+            if $postprocess; then
+                # post-process
+                ${kind}_post >_tmp/$base-post.out 2>_tmp/$base-post.err \
+                  || Ppostexit=$?
+            fi
+            Ppostcheck
         )
         case $? in
             0) Ppass_test;;
