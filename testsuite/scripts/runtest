@@ -17,6 +17,7 @@
 Pfile="$1"
 Pdir="`dirname $1`"
 Pbase="`basename $1 .t`"
+Pbyte="$Pbase".byt
 Pexec="$Pbase".exe
 
 # todo:
@@ -91,7 +92,7 @@ Tbyte_compile () {
     Tprepare
     Tlex_yacc_gen
     Plog $Pocamlc $Tcompflags $Tcustom $Tbyteflags $Tmli_files $Tml_files \
-         -o $Pexec
+         -o $Pbyte
 }
 
 Topt_compile () {
@@ -100,9 +101,14 @@ Topt_compile () {
     Plog $Pocamlopt $Tcompflags $Toptflags $Tmli_files $Tml_files -o $Pexec
 }
 
-Tprint_command_default () {
+Tbyte_print_command_default () {
     if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
-    echo ./$Pexec $Targs '<'$infile
+    echo $Texec_env $runtime ./$Pbyte $Targs '<'$infile
+}
+
+Topt_print_command_default () {
+    if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
+    echo $Texec_env ./$Pexec $Targs '<'$infile
 }
 
 Tbyte_run () {
@@ -110,27 +116,11 @@ Tbyte_run () {
         -custom) runtime=;;
         *) runtime=$Pocamlrun;;
     esac
-    Plog $Texec_env $runtime `Tprint_command` \
-         '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+    Plog `Tbyte_print_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Topt_run () {
-    Plog $Texec_env `Tprint_command` \
-         '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
-}
-
-Tmultiple () {
-    command="$1"
-    shift
-    for i in $*; do
-        eval "${command}_$i () {
-            Targs=\"\$Targs_$i\";
-            Texit=\"\${Texit_$i:-0}\";
-            Pbase=\"\$Pbase-$i\";
-            $command;
-        }"
-        Ttests="$Ttests ${command}_$i"
-    done
+    Plog `Topt_print_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
 }
 
 Tbyte_compile_run () {
@@ -189,8 +179,13 @@ Tprepare () {
 }
 
 # override me
-Tprint_command () {
-    Tprint_command_default
+Tbyte_print_command () {
+    Tbyte_print_command_default
+}
+
+# override me
+Topt_print_command () {
+    Topt_print_command_default
 }
 
 # override me

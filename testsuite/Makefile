@@ -92,6 +92,7 @@ ENV = TOPDIR='$(TOPDIR)' \
 
 .PHONY: all
 all:
+	$(MAKE) clean >/dev/null
 	$(ENV) ./scripts/do_tests $(dir)
 
 .PHONY: clean
