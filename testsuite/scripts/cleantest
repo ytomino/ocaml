@@ -1,19 +1,45 @@
+#!/bin/bash
+
 #########################################################################
 #                                                                       #
 #                                 OCaml                                 #
 #                                                                       #
-#                 Xavier Clerc, SED, INRIA Rocquencourt                 #
+#                 Damien Doligez, Jane Street Capital                   #
 #                                                                       #
-#   Copyright 2010 Institut National de Recherche en Informatique et    #
+#   Copyright 2015 Institut National de Recherche en Informatique et    #
 #   en Automatique.  All rights reserved.  This file is distributed     #
 #   under the terms of the Q Public License version 1.0.                #
 #                                                                       #
 #########################################################################
 
-BASEDIR=../..
-#MODULES=
-MAIN_MODULE=io
-EXEC_ARGS=io.ml
+Pfile=$1
+Pdir=$(dirname $1)
+base=$(basename $1 .t)
+byte_exec=$base.byt
+opt_exec=$base.exe
 
-include $(BASEDIR)/makefiles/Makefile.one
-include $(BASEDIR)/makefiles/Makefile.common
+ml_files=$base.ml
+
+clean_default () {
+    rm -rf _tmp
+    rm -f $byte_exec $opt_exec
+    for i in $ml_files $mli_files; do
+        rm -f ${i%.ml*}.{cmi,cmo,cmx,o}
+    done
+    for i in $mll_files; do
+        rm -f ${i%.mll}.ml
+    done
+    for i in $mly_files; do
+        rm -f ${i%.mly}.{ml,mli}
+    done
+}
+
+clean () {
+    clean_default
+}
+
+cd "$Pdir"
+
+. ./$base.t
+
+clean

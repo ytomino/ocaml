@@ -10,5 +10,5 @@
 #                                                                       #
 #########################################################################
 
-Tcompflags=-g
-Texec_env=OCAMLRUNPARAM=b=1
+compflags=-g
+exec_env=OCAMLRUNPARAM=b=1

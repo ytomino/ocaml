@@ -92,21 +92,12 @@ ENV = TOPDIR='$(TOPDIR)' \
 
 .PHONY: all
 all:
-	$(MAKE) clean >/dev/null
+	$(ENV) $(MAKE) clean
 	$(ENV) ./scripts/do_tests $(dir)
 
 .PHONY: clean
 clean:
-	find tests -name '*.t' | while read f; do \
-	  b=$${f%.t}; \
-	  rm -f $$b.exe $$b.tmp_* $$b-*.tmp_*; \
-	  ( cd `dirname $$b` && \
-            ( rm -f *.cm[aiostx] *.cmx[as] *.cmti *.$(O) *.$(SO) *.$(A); \
-              rm -rf *.dSYM ) ); \
-        done
-	find tests -name '*.clean' | while read f; do \
-	  (cd `dirname $$f` && . ./`basename $$f`); \
-	done
+	scripts/do_clean tests
 	rm -f _log _full-log
 
 #####

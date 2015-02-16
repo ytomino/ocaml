@@ -14,15 +14,11 @@
 
 [ -z "$Tdebug" ] || set -x
 
-Pfile="$1"
-Pdir="`dirname $1`"
-Pbase="`basename $1 .t`"
-Pbyte="$Pbase".byt
-Pexec="$Pbase".exe
-
-# todo:
-# 1. make "custom" user-settable
-# 2. transmit the value of "custom" to Trun (if custom, do not use ocamlrun)
+Pfile=$1
+Pdir=$(dirname $1)
+base=$(basename $1 .t)
+byte_exec=$base.byt
+opt_exec=$base.exe
 
 Pocamlrun="$TOPDIR/boot/ocamlrun$EXE"
 Pflags="-nostdlib -I $OTOPDIR/stdlib"
@@ -37,175 +33,180 @@ Pocamlmklib="$Pocamlrun $OTOPDIR/tools/ocamlmklib \
              -ocamlc '$OTOPDIR/boot/ocamlrun$EXE $OTOPDIR/ocamlc $Pflags' \
              -ocamlopt '$OTOPDIR/boot/ocamlrun$EXE $OTOPDIR/ocamlopt $Pflags'"
 if [ "$ARCH" = none -o "$ASM" = none ]; then
-  Pwith_asm=false
+  Pwith_opt=false
 else
-  Pwith_asm=true
+  Pwith_opt=true
 fi
 
 if $SUPPORTS_SHARED_LIBRARIES; then
-  Tcustom=
+  config_custom=false
 else
-  Tcustom=-custom
+  config_custom=true
 fi
 
-Tml_files="$Pbase.ml"
-Tmli_files=
-Tmll_files=
-Tmly_files=
+ml_files="$base.ml"
+mli_files=
+mll_files=
+mly_files=
 
-Ttests="Tbyte_compile_run Topt_compile_run"
+kinds="byte opt"
 
-Tcompflags=
-Tbyteflags=
-Toptflags=
-Tlexflags=
-Tyaccflags=
+compflags=
+byteflags=
+custom=false
+optflags=
+lexflags=-q
+yaccflags=-q
 
-Texec_env=
-Targs=
-Texit=0
+exec_env=
+args=
+exit=0
+compexit=0
+postprocess=false
+postexit=0
 
-# Log the command and execute it
-Plog () {
+# Log the command and execute it, saving the outputs
+launch () {
+    pwd
+    echo "$*" >&2
+    Ptmpexit=0
+    Pstg=${Pstage:+-$Pstage}
+    eval "$*" </dev/null >>_tmp/$base-$kind$Pstg.out \
+         2>>_tmp/$base-$kind$Pstg.err \
+      || Ptmpexit=$?
+    eval "P${Pstage}exit=$Ptmpexit"
+}
+
+# Log the command and execute it, leaving the outputs alone
+log () {
     echo "$*" >&2
     eval "$*"
 }
 
-# Same as Plog, but don't fail if the command fails, and save the
-# result code
-Plogr () {
-    echo "$*" >&2
-    Pactualexit=0
-    eval "$*" || Pactualexit=$?
-}
-
-Tlex_yacc_gen () {
-    for f in $Tmll_files; do
-        Plog $Plex $Tlexflags $f
+lex_yacc_gen () {
+    for f in $mll_files; do
+        launch $Plex $lexflags $f
     done
-    for f in $Tmly_files; do
-        Plog $Pyacc $Tyaccflags $f
+    for f in $mly_files; do
+        launch $Pyacc $yaccflags $f
     done
 }
 
-Tbyte_compile () {
-    Tprepare
-    Tlex_yacc_gen
-    Plog $Pocamlc $Tcompflags $Tcustom $Tbyteflags $Tmli_files $Tml_files \
-         -o $Pbyte
+byte_comp () {
+    preprocess
+    lex_yacc_gen
+    if $custom || $config_custom; then
+        custflag=-custom
+    else
+        custflag=
+    fi
+    launch $Pocamlc $compflags $custflag $byteflags $mli_files $ml_files \
+           -o $byte_exec
 }
 
-Topt_compile () {
-    Tprepare
-    Tlex_yacc_gen
-    Plog $Pocamlopt $Tcompflags $Toptflags $Tmli_files $Tml_files -o $Pexec
+opt_comp () {
+    preprocess
+    lex_yacc_gen
+    launch $Pocamlopt $compflags $optflags $mli_files $ml_files -o $opt_exec
 }
 
-Tbyte_print_command_default () {
-    if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
-    echo $Texec_env $runtime ./$Pbyte $Targs '<'$infile
+byte_run () {
+    if $custom || $config_custom; then
+        runtime=
+    else
+        runtime=$Pocamlrun
+    fi
+    launch $exec_env $runtime ./$byte_exec $args
 }
 
-Topt_print_command_default () {
-    if [ -f $Pbase.in ]; then infile=$Pbase.in; else infile=/dev/null; fi
-    echo $Texec_env ./$Pexec $Targs '<'$infile
+opt_run () {
+    launch $exec_env ./$opt_exec $args
 }
 
-Tbyte_run () {
-    case $Tcustom in
-        -custom) runtime=;;
-        *) runtime=$Pocamlrun;;
-    esac
-    Plog `Tbyte_print_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+postprocess_out () {
+    cp $1 $1.post
 }
 
-Topt_run () {
-    Plog `Topt_print_command` '>'$Pbase.tmp_out '2>'$Pbase.tmp_err
+byte_postprocess_out () {
+    postprocess_out
 }
 
-Tbyte_compile_run () {
-    Tbyte_compile
-    Tbyte_run
+opt_postprocess_out () {
+    postprocess_out
 }
 
-Topt_compile_run () {
-    Topt_compile
-    Topt_run
+postprocess_err () {
+    cp $1 $1.post
 }
 
-Tcompare_files_default () {
+opt_postprocess_err () {
+    postprocess_err
+}
+
+opt_postprocess_err () {
+    postprocess_err
+}
+
+postprocess_sort () {
+    log "sort $1 >$1.post"
+}
+
+postprocess_sort_uniq () {
+    log "sort $1 | uniq >$1.post"
+}
+
+Pcompare_files () {
     ref="$1"
     act="$2"
     if [ ! -f "$ref" ]; then ref=/dev/null; fi
-    Tpostprocess "$act" > "${act}_pp"
-    Plog cmp "$ref" "${act}_pp"
+    log cmp $ref $act
 }
 
-Tpostprocess_none () {
-    cat "$1"
+Pcheck () {
+    if $postprocess; then
+        post=.post
+    else
+        post=
+    fi
+    (
+        set -e
+        for suff in -comp.out -comp.err .out$post .err$post; do
+            Pcompare_files $base$suff _tmp/$base-$kind$suff
+        done
+        [ "$Pcompexit" -eq "$compexit" ] || {
+            printf "ERROR: compilation exit code %d is different from expected %d\n" \
+                $Pcompexit $compexit
+            false
+        }
+        [ "$Pexit" -eq "$exit" ] || {
+            printf "ERROR: program exit code %d is different from expected %d\n" \
+                $Pcompexit $compexit
+            false
+        }
+    )
 }
 
-Tpostprocess_sort () {
-    Plog sort "$1"
-}
-
-Tpostprocess_sort_uniq () {
-    Plog sort "$1" '|' uniq
-}
-
-Tpostcheck_default () {
-    for suff in out err; do
-        if [ -f $Pbase.tmp_$suff ]; then
-            Tcompare_files $Pbase.$suff $Pbase.tmp_$suff
-        fi
-    done
-    [ "$Pactualexit" -eq "$Texit" ] || {
-        printf "ERROR: actual exit code %d is different from expected %d\n" \
-               $Pactualexit $Texit
-        false
-    }
-}
-
-Tprecheck_default () {
-    case $Pwith_asm/$Tcommand in
-        false/Topt_*) false;;
+Pcheck_opt () {
+    case $kind/$Pwith_opt in
+        opt/false) false;;
         *) true;;
     esac
 }
 
-#override me
-Tprepare () {
+preprocess () {
     :
 }
 
-# override me
-Tbyte_print_command () {
-    Tbyte_print_command_default
+precheck () {
+    :
 }
 
-# override me
-Topt_print_command () {
-    Topt_print_command_default
+opt_precheck () {
+    precheck
 }
 
-# override me
-Tcompare_files () {
-    Tcompare_files_default "$@"
-}
-
-#override me
-Tpostprocess () {
-    Tpostprocess_none "$@"
-}
-
-#override me
-Tpostcheck () {
-    Tpostcheck_default
-}
-
-#override me
-Tprecheck () {
-    Tprecheck_default
+byte_precheck () {
+    precheck
 }
 
 Pexport_variables () {
@@ -216,9 +217,9 @@ Pexport_variables () {
 }
 
 Pstart_test () {
-    printf "Testing %s with %s..." "$Pfile" "$Tcommand" >&3
+    printf "Testing %-4s %s..." "$kind" "$Pfile" >&3
     printf "#################################################"
-    printf "\nTesting %s with %s...\n" "$Pfile" "$Tcommand"
+    printf "\nTesting %-4s %s...\n" "$kind" "$Pfile"
 }
 
 Pskip_test () {
@@ -230,7 +231,6 @@ Pskip_test () {
 Pfail_test () {
     printf "FAIL\n" >&3
     printf "FAIL\n\n"
-    exit 0
 }
 
 Ppass_test () {
@@ -241,9 +241,14 @@ Ppass_test () {
 cd "$Pdir"
 
 ######################################################
-. $Pbase.t
+# read the user's definitions
+
+. ./$base.t
+
 ######################################################
 
+Pexport_variables
+mkdir -p _tmp
 for kind in $kinds; do
     Pstart_test
     (
@@ -251,23 +256,18 @@ for kind in $kinds; do
         Pcheck_opt || Pskip_test
         # Run user-defined pre-check
         ${kind}_precheck || Pskip_test
-        rm -f _tmp/"$base".*
-        Pcompexit=0
-        Prunexit=0
-        Ppostexit=0
+        rm -f _tmp/$base{-comp,,-post}.{out,err}
         (
-            # compile
-            Pcompexit=0
-            ${kind}_comp >_tmp/$base-comp.out 2>_tmp/$base-comp.err \
-              || Pcompexit=$?
-            # run
-            ${kind}_run >_tmp/$base.out 2>_tmp/$base.err || Prunexit=$?
+            Pstage=comp
+            ${kind}_comp
+            Pstage=
+            ${kind}_run
             if $postprocess; then
-                # post-process
-                ${kind}_post >_tmp/$base-post.out 2>_tmp/$base-post.err \
-                  || Ppostexit=$?
+                Pstage=post
+                (cd _tmp; ${kind}_postprocess_out $base-$kind.out)
+                (cd _tmp; ${kind}_postprocess_err $base-$kind.err)
             fi
-            Ppostcheck
+            Pcheck
         )
         case $? in
             0) Ppass_test;;

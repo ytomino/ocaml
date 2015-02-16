@@ -10,9 +10,16 @@
 #                                                                       #
 #########################################################################
 
-Topt_compile () {
-    Pexport_variables
-    $MAKE all $Pbase.o
-    $NATIVECC -o $Pbase.exe $cflags $Pbase.o $ARCH.o
+kinds=opt
+
+cbase=$base
+opt_comp () {
+    log $MAKE all $cbase.o
+    log $NATIVECC -o $opt_exec $cflags $cbase.o $ARCH.o
+    launch :
 }
-Ttests=Topt_compile_run
+
+clean () {
+    clean_default
+    "$MAKE" clean
+}

@@ -10,5 +10,8 @@
 #                                                                       #
 #########################################################################
 
-. ./backtrace-common.sh
-args=a
+. ./Testcommon.sh
+cbase=checkbound
+cflags="-DCHECKBOUND main.c"
+args="1200 1000"
+exit=2

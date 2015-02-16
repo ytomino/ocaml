@@ -10,6 +10,6 @@
 #                                                                       #
 #########################################################################
 
-. backtrace-common.sh
-Targs=d
-Texit=2
+. ./backtrace-common.sh
+args=d
+exit=2

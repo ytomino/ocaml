@@ -11,5 +11,5 @@
 #########################################################################
 
 . Testcommon.sh
-Tml_files=backtrace.ml
-Ttests='Tbyte_compile_run Topt_compile_run'
+ml_files=backtrace.ml
+kinds='byte opt'

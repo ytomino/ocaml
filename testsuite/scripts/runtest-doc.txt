@@ -1,0 +1,90 @@
+Each *.t file describes a (fixed) number of tests, usually either one
+or two (byte-code and/or native).
+
+The list of tests is defined in variable $kinds (by default 'byte opt')
+
+Each test is composed of 5 phases:
+1. preliminary check
+   -> functions {byte,opt}_precheck (by default, they call precheck,
+      which just returns 0 (i.e. true).
+   if this funtion returns true, the test will be run, otherwise it
+   will be skipped.
+
+ 2. compilation
+    -> functions {byte,opt}_comp. By default, they compile the files
+    listed in $ml_files, $mli_files, $mll_files, $mly_files. By
+    default, all are empty except $ml_files, which contains only
+    $base.ml (where $base.t is the current test file).
+    For compiler flags, they use the variables:
+    $compflags (for both compilers)
+    $byteflags (for byte-code compilation)
+    $optflags (for native-code compilation)
+    $lexflags [default "-q"] (for ocamllex)
+    $yaccflags [default "-q"] (for ocamlyacc)
+    $config_custom (false if shared libs are available, true otherwise)
+    $custom [default false]: compile in custom mode
+
+    Before starting to compile, the default functions run the function
+    preprocess (by default, does nothing).
+
+    Compilation is done in custom mode if $config_custom or $custom is
+    true, and in that case the byte-code executable is run without
+    explicitly launching the bytecode interpreter.
+
+3. run
+   -> functions {byte,opt}_run. By default, they run $base.{byt,opt},
+   redirecting stdin, stdout and stderr, and recording the exit code.
+   For byte-code, this runs the bytecode interpreter iff $custom or
+   $config_custom is true.
+   If you override these functions, use the launch function (with the
+   command line as arguments) to launch the program with the correct
+   redirections.
+   This will prepend $exec_env and append $args to the command line
+   (default empty) so you can set some environment variables before
+   the program is run, and run it with some arguments.
+
+4. post-process
+   -> this is done only if $postprocess=true (by default, false).
+   functions {byte,opt}_postprocess_{out,err}. By default, they run
+   postprocess_{out,err}, which simply copy $base.out to
+   $base-post.out and $base.err to $base-post.err.
+   The postprocessing functions are run in the directory of the output
+   files.
+
+5. checking
+   This is done by comparing the stdout and stderr of each stage with
+   the ones given in the following files:
+   $base-comp.{out,err}: concatenated outputs of the compilation
+     commands.
+   $base.{out,err}: output of the run command, only checked if
+     $postprocess is false
+   $base-post.{out,err}: output of the post-process command, only
+     checked if $postprocess is true
+   The exit codes are also checked, against the variables:
+   $compexit: exit code of the last compilation command
+   $exit: exit code of the program under test
+   $postexit: exit code of the post-processing for the stderr.
+
+6. cleaning
+   The .t file may redefine the function "clean" (by default, calls
+   clean_default) to remove compilation and temporary file. The
+   "clean_default" function remove the compilation files that
+   correspond to the $ml_files, $mli_files, $mll_files, $mly_files
+   variables, the _tmp directory, and the default byte-code and
+   executable files.
+   
+Examples
+
+If you want to compile foo.ml, run the result, and make sure the
+stdout and stderr are empty and the result code is 0, just add an
+empty foo.t file.
+
+If your program is composed of several source files, just put
+  ml_files="a.ml b.ml c.ml"
+in your .t file.
+
+If your program has a lexer and parser, you'd write:
+mll_files=lexer.mll
+mly_files=parser.mly
+mli_files=parser.mli lexer.mli others.mli
+ml_files=parser.ml lexer.ml others.ml

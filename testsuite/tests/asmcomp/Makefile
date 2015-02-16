@@ -47,3 +47,6 @@ power.o: power-$(SYSTEM).o
 	cp power-$(SYSTEM).o power.o
 
 arch: $(ARCH).o
+
+clean:
+	rm -f ./codegen parsecmm.ml parsecmm.mli lexcmm.ml

@@ -10,5 +10,5 @@
 #                                                                       #
 #########################################################################
 
-Tml_files="float_record.ml tfloat_record.ml"
-Tmli_files=float_record.mli
+ml_files="float_record.ml tfloat_record.ml"
+mli_files=float_record.mli

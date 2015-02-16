@@ -10,7 +10,7 @@
 #                                                                       #
 #########################################################################
 
-. Testcommon.sh
+. ./Testcommon.sh
 
 cflags="-DINT_INT -DFUN=fib main.c"
-Targs=15
+args=15
