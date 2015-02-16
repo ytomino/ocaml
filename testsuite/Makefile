@@ -83,6 +83,7 @@ ENV = TOPDIR='$(TOPDIR)' \
       SO='$(SO)' \
       BYTECC='$(BYTECC)' \
       OTOPDIR='$(OTOPDIR)' \
+      CTOPDIR='$(CTOPDIR)' \
       CYGPATH='$(CYGPATH)' \
       DIFF='$(DIFF)' \
       CANKILL='$(CANKILL)' \
@@ -92,12 +93,12 @@ ENV = TOPDIR='$(TOPDIR)' \
 
 .PHONY: all
 all:
-	$(ENV) $(MAKE) clean
+	$(MAKE) clean
 	$(ENV) ./scripts/do_tests $(dir)
 
 .PHONY: clean
 clean:
-	scripts/do_clean tests
+	$(ENV) scripts/do_clean tests
 	rm -f _log _full-log
 
 #####

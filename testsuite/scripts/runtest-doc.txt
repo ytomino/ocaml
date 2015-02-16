@@ -83,7 +83,7 @@ If your program is composed of several source files, just put
   ml_files="a.ml b.ml c.ml"
 in your .t file.
 
-If your program has a lexer and parser, you'd write:
+If your program has a lexer and parser, you write:
 mll_files=lexer.mll
 mly_files=parser.mly
 mli_files=parser.mli lexer.mli others.mli

@@ -48,6 +48,7 @@ ml_files="$base.ml"
 mli_files=
 mll_files=
 mly_files=
+c_files=
 
 kinds="byte opt"
 
@@ -83,7 +84,7 @@ log () {
     eval "$*"
 }
 
-lex_yacc_gen () {
+generate_lex_yacc () {
     for f in $mll_files; do
         launch $Plex $lexflags $f
     done
@@ -92,31 +93,32 @@ lex_yacc_gen () {
     done
 }
 
+compile_c_files () {
+    Pofile=
+    for f in $c_files; do
+        launch $NATIVECC $NATIVECCCOMPOPTS -c -I $CTOPDIR/byterun $f
+        Pofiles="$Pofile ${f%.c}.o"
+    done
+}
+
 byte_comp () {
     preprocess
-    lex_yacc_gen
-    if $custom || $config_custom; then
-        custflag=-custom
-    else
-        custflag=
-    fi
-    launch $Pocamlc $compflags $custflag $byteflags $mli_files $ml_files \
-           -o $byte_exec
+    generate_lex_yacc
+    compile_c_files
+    launch $Pocamlc $compflags $Pcustomflag $byteflags $Pofiles \
+           $mli_files $ml_files -o $byte_exec
 }
 
 opt_comp () {
     preprocess
-    lex_yacc_gen
-    launch $Pocamlopt $compflags $optflags $mli_files $ml_files -o $opt_exec
+    generate_lex_yacc
+    compile_c_files
+    launch $Pocamlopt $compflags $optflags $Pofiles \
+           $mli_files $ml_files -o $opt_exec
 }
 
 byte_run () {
-    if $custom || $config_custom; then
-        runtime=
-    else
-        runtime=$Pocamlrun
-    fi
-    launch $exec_env $runtime ./$byte_exec $args
+    launch $exec_env $Puseruntime ./$byte_exec $args
 }
 
 opt_run () {
@@ -244,6 +246,17 @@ cd "$Pdir"
 # read the user's definitions
 
 . ./$base.t
+
+# compute whether to use a custom runtime
+Pcustomflag=
+if $custom; then Pcustomflag=-custom; fi
+if ! $SUPPORTS_SHARED_LIBRARIES; then Pcustomflag=-custom; fi
+if [ -n "$c_files" ]; then Pcustomflag=-custom; fi
+if [ "$Pcustomflag" = -custom ]; then
+    Puseruntime=
+else
+    Puseruntime=$Pocamlrun
+fi
 
 ######################################################
 
