@@ -72,8 +72,8 @@ launch () {
     echo "$*" >&2
     Ptmpexit=0
     Pstg=${Pstage:+-$Pstage}
-    eval "$*" </dev/null >>_tmp/$base-$kind$Pstg.out \
-         2>>_tmp/$base-$kind$Pstg.err \
+    eval "$*" </dev/null >>_tmp/$base-$kind$Pstg.refout \
+         2>>_tmp/$base-$kind$Pstg.referr \
       || Ptmpexit=$?
     eval "P${Pstage}exit=$Ptmpexit"
 }
@@ -172,7 +172,7 @@ Pcheck () {
     fi
     (
         set -e
-        for suff in -comp.out -comp.err .out$post .err$post; do
+        for suff in -comp.refout -comp.referr .refout$post .referr$post; do
             Pcompare_files $base$suff _tmp/$base-$kind$suff
         done
         [ "$Pcompexit" -eq "$compexit" ] || {
@@ -269,7 +269,7 @@ for kind in $kinds; do
         Pcheck_opt || Pskip_test
         # Run user-defined pre-check
         ${kind}_precheck || Pskip_test
-        rm -f _tmp/$base{-comp,,-post}.{out,err}
+        rm -f _tmp/$base{-comp,,-post}.ref{out,err}
         (
             Pstage=comp
             ${kind}_comp
@@ -277,8 +277,8 @@ for kind in $kinds; do
             ${kind}_run
             if $postprocess; then
                 Pstage=post
-                (cd _tmp; ${kind}_postprocess_out $base-$kind.out)
-                (cd _tmp; ${kind}_postprocess_err $base-$kind.err)
+                (cd _tmp; ${kind}_postprocess_out $base-$kind.refout)
+                (cd _tmp; ${kind}_postprocess_err $base-$kind.referr)
             fi
             Pcheck
         )
