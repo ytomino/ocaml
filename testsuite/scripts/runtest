@@ -54,6 +54,7 @@ mli_files=
 mll_files=
 mly_files=
 c_files=
+with_testlib=false
 
 kinds="byte opt"
 
@@ -110,16 +111,30 @@ byte_comp () {
     preprocess
     generate_lex_yacc
     compile_c_files
+    if $with_testlib; then
+        include="-I $TOPDIR/testsuite/lib"
+        libcmo=testing.cmo
+    else
+        include=
+        libcmo=
+    fi
     launch $Pocamlc $compflags $Pcustomflag $byteflags $Pofiles \
-           $mli_files $ml_files -o $byte_exec
+           $include $libcmo $mli_files $ml_files -o $byte_exec
 }
 
 opt_comp () {
     preprocess
     generate_lex_yacc
     compile_c_files
+    if $with_testlib; then
+        include="-I $TOPDIR/testsuite/lib"
+        libcmx=testing.cmx
+    else
+        include=
+        libcmx=
+    fi
     launch $Pocamlopt $compflags $optflags $Pofiles \
-           $mli_files $ml_files -o $opt_exec
+           $include $libcmx $mli_files $ml_files -o $opt_exec
 }
 
 byte_run () {

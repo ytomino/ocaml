@@ -91,13 +91,6 @@ test "quatre" g 4 4 ;
 test "quatre" g 7 100 ; ()
 ;;
 
-(*
-File "morematch.ml", line 73, characters 2-5:
-Warning U: this sub-pattern is unused.
-File "morematch.ml", line 74, characters 2-3:
-Warning U: this sub-pattern is unused.
-*)
-
 let h x =
  match x with
    (1,1) -> 1
@@ -458,10 +451,7 @@ let rec autre = function
 | I,_,_ -> 6
 | E _,_,_ -> 7
 ;;
-(*
-File "morematch.ml", line 437, characters 43-44:
-Warning U: this sub-pattern is unused.
-*)
+
 test "autre" autre (J,J,F (D,D)) 3 ;
 test "autre" autre (J,J,D) 3 ;
 test "autre" autre (J,J,I) 9 ;
@@ -481,12 +471,7 @@ let xyz = function
 | _,_,(X|U _) -> 8
 | _,_,Y -> 5
 ;;
-(*
-File "morematch.ml", line 459, characters 7-8:
-Warning U: this sub-pattern is unused.
-File "morematch.ml", line 460, characters 2-7:
-Warning U: this match case is unused.
-*)
+
 test "xyz" xyz (YC,YC,X) 6 ;
 test "xyz" xyz (YC,YB,U X) 8 ;
 test "xyz" xyz (YB,YC,X) 6 ; ()
@@ -1076,12 +1061,6 @@ test "seb" seb ((0,Uout),Uin) 2 ;
        false (in Switch)
 *)
 
-(*
-File "morematch.ml", line 1060, characters 8-65:
-Warning: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-A `D
-*)
 type ('a, 'b) t_j = A of 'a | B of 'b * 'a | C
 
 let f = function
@@ -1122,12 +1101,6 @@ let f = function
   |  B, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> "12"
   |  _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> "13"
 
-(*
-File "morematch.ml", line 1094, characters 5-51:
-Warning: this match case is unused.
-File "morematch.ml", line 1096, characters 5-51:
-Warning: this match case is unused.
-*)
 let _  =
   test "luc"  f (B, A, A, A, A, A, A, A, A, A, A, B, A, A, A, A) "10" ;
   test "luc"  f (B, A, A, A, A, A, A, A, A, A, A, A, A, A, A, A) "12" ;

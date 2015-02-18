@@ -2,28 +2,12 @@
 #                                                                       #
 #                                 OCaml                                 #
 #                                                                       #
-#                 Xavier Clerc, SED, INRIA Rocquencourt                 #
+#                 Damien Doligez, Jane Street Capital                   #
 #                                                                       #
-#   Copyright 2010 Institut National de Recherche en Informatique et    #
+#   Copyright 2015 Institut National de Recherche en Informatique et    #
 #   en Automatique.  All rights reserved.  This file is distributed     #
 #   under the terms of the Q Public License version 1.0.                #
 #                                                                       #
 #########################################################################
 
-
-OCAMLRUN = $(TOPDIR)/boot/ocamlrun
-OCAMLFLAGS = -nostdlib -I $(TOPDIR)/stdlib
-
-.PHONY: all byte opt
-
-all: byte opt
-
-byte: testing.mli testing.ml
-	$(OCAMLRUN) $(TOPDIR)/ocamlc $(OCAMLFLAGS) -c testing.mli testing.ml
-
-opt: testing.mli testing.ml
-	$(OCAMLRUN) $(TOPDIR)/ocamlopt $(OCAMLFLAGS) -c testing.mli testing.ml
-
-.PHONY: clean
-clean:
-	rm -f testing.cm[iox] testing.$(O)
+ml_files="offset.ml pr6726.ml main.ml"

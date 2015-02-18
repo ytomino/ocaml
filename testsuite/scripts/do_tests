@@ -12,8 +12,6 @@
 #                                                                       #
 #########################################################################
 
-rm -f _log _full-log
-
 case $1 in
     -byteonly) testflag=-byteonly; shift;;
     -optonly) testflag=-optonly; shift;;

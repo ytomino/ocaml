@@ -26,12 +26,12 @@
 *.cmti
 *.annot
 
-*.result
 *.byte
 *.native
-program
+*.byt
 *.exe
 *.exe.manifest
+_tmp
 
 .depend
 .depend.nt

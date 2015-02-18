@@ -1,0 +1,22 @@
+File "morematch.ml", line 1066, characters 8-65:
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a value that is not matched:
+A `D
+File "morematch.ml", line 86, characters 2-5:
+Warning 12: this sub-pattern is unused.
+File "morematch.ml", line 87, characters 2-3:
+Warning 12: this sub-pattern is unused.
+File "morematch.ml", line 236, characters 33-47:
+Warning 12: this sub-pattern is unused.
+File "morematch.ml", line 405, characters 2-15:
+Warning 11: this match case is unused.
+File "morematch.ml", line 449, characters 43-44:
+Warning 12: this sub-pattern is unused.
+File "morematch.ml", line 471, characters 7-8:
+Warning 12: this sub-pattern is unused.
+File "morematch.ml", line 472, characters 2-7:
+Warning 11: this match case is unused.
+File "morematch.ml", line 1100, characters 5-51:
+Warning 11: this match case is unused.
+File "morematch.ml", line 1102, characters 5-51:
+Warning 11: this match case is unused.

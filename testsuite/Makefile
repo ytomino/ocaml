@@ -33,7 +33,7 @@ endif
 #########################################################################
 # set up configuration variables
 
-TOPDIR=$(shell pwd)/..
+TOPDIR=$(shell cd .. && pwd)
 WINTOPDIR=$(shell cygpath -m $(TOPDIR))
 
 # TOPDIR is the root directory of the OCaml sources, in Unix syntax.
@@ -93,21 +93,26 @@ ENV = TOPDIR='$(TOPDIR)' \
 
 .PHONY: all
 all:
-	$(MAKE) clean
-	$(ENV) ./scripts/do_tests $(dir)
+	@rm -f _log _full-log
+	@$(MAKE) clean >>_full-log 2>&1
+	@$(ENV) $(MAKE) -C lib byte opt >>_full-log 2>&1
+	@$(ENV) ./scripts/do_tests $(dir)
 
 byte:
-	$(MAKE) clean
-	$(ENV) ./scripts/do_tests -byteonly $(dir)
+	@rm -f _log _full-log
+	@$(MAKE) clean >>_full-log 2>&1
+	@$(ENV) $(MAKE) -C lib byte >>_full-log 2>&1
+	@$(ENV) ./scripts/do_tests -byteonly $(dir)
 
 opt:
-	$(MAKE) clean
-	$(ENV) ./scripts/do_tests -optonly $(dir)
+	@rm -f _log _full-log
+	@$(MAKE) clean >>_full-log 2>&1
+	@$(ENV) $(MAKE) -C lib opt >>_full-log 2>&1
+	@$(ENV) ./scripts/do_tests -optonly $(dir)
 
 .PHONY: clean
 clean:
 	$(ENV) scripts/do_clean tests
-	rm -f _log _full-log
 
 #####
 # For compatibility with the old test makefile
