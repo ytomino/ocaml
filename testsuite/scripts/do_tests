@@ -14,9 +14,17 @@
 
 rm -f _log _full-log
 
+case $1 in
+    -byteonly) testflag=-byteonly; shift;;
+    -optonly) testflag=-optonly; shift;;
+    *) testflag=;;
+esac
+
 for d in "$@"; do
-    find "$d" -name '*.t' | LC_ALL=C sort \
-      | xargs -L 1 scripts/runtest 3>&1 >>_full-log 2>&1 | tee -a _log
+    find "$d" -name '*.t' \
+      | LC_ALL=C sort \
+      | xargs -L 1 scripts/runtest $testflag 3>&1 >>_full-log 2>&1 \
+      | tee -a _log
 done
 
 if [ "$1" = "tests" ]; then

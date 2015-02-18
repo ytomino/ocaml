@@ -14,6 +14,13 @@
 
 [ -z "$Tdebug" ] || set -x
 
+Pwith_byte=true
+Pwith_opt=true
+case $1 in
+    -byteonly) Pwith_opt=false; shift;;
+    -optonly) Pwith_byte=false; shift;;
+esac
+
 Pfile=$1
 Pdir=$(dirname $1)
 base=$(basename $1 .t)
@@ -34,8 +41,6 @@ Pocamlmklib="$Pocamlrun $OTOPDIR/tools/ocamlmklib \
              -ocamlopt '$OTOPDIR/boot/ocamlrun$EXE $OTOPDIR/ocamlopt $Pflags'"
 if [ "$ARCH" = none -o "$ASM" = none ]; then
   Pwith_opt=false
-else
-  Pwith_opt=true
 fi
 
 if $SUPPORTS_SHARED_LIBRARIES; then
@@ -188,9 +193,10 @@ Pcheck () {
     )
 }
 
-Pcheck_opt () {
-    case $kind/$Pwith_opt in
-        opt/false) false;;
+Pcheck_kind () {
+    case $kind/$Pwith_opt/$Pwith_byte in
+        opt/false/*) false;;
+        byte/*/false) false;;
         *) true;;
     esac
 }
@@ -265,8 +271,9 @@ mkdir -p _tmp
 for kind in $kinds; do
     Pstart_test
     (
-        # Skip opt test if configured without native code
-        Pcheck_opt || Pskip_test
+        # Skip test if kind=opt and configured without native code
+        # or if user disabled the current kind
+        Pcheck_kind || Pskip_test
         # Run user-defined pre-check
         ${kind}_precheck || Pskip_test
         rm -f _tmp/$base{-comp,,-post}.ref{out,err}

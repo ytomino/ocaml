@@ -96,6 +96,14 @@ all:
 	$(MAKE) clean
 	$(ENV) ./scripts/do_tests $(dir)
 
+byte:
+	$(MAKE) clean
+	$(ENV) ./scripts/do_tests -byteonly $(dir)
+
+opt:
+	$(MAKE) clean
+	$(ENV) ./scripts/do_tests -optonly $(dir)
+
 .PHONY: clean
 clean:
 	$(ENV) scripts/do_clean tests
