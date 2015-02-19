@@ -240,9 +240,9 @@ Pexport_variables () {
 }
 
 Pstart_test () {
-    printf "Testing %-4s %s..." "$kind" "$Pfile" >&3
+    printf "Testing %-4s %s ... " "$kind" "$Pfile" >&3
     printf "#################################################"
-    printf "\nTesting %-4s %s...\n" "$kind" "$Pfile"
+    printf "\nTesting %-4s %s ...\n" "$kind" "$Pfile"
 }
 
 Pskip_test () {
