@@ -28,7 +28,7 @@ byte_exec=$base.byt
 opt_exec=$base.exe
 
 Pocamlrun="$TOPDIR/boot/ocamlrun$EXE"
-Pflags="-nostdlib -I $OTOPDIR/stdlib"
+Pflags="-nostdlib -I $OTOPDIR/stdlib -I $OTOPDIR/testsuite/lib"
 Pocamlc="$Pocamlrun $OTOPDIR/ocamlc $Pflags"
 Pocamlopt="$Pocamlrun $OTOPDIR/ocamlopt $Pflags"
 Pocaml="$Pocamlrun $OTOPDIR/ocaml $Pflags \
@@ -54,7 +54,7 @@ mli_files=
 mll_files=
 mly_files=
 c_files=
-with_testlib=false
+libs=
 
 kinds="byte opt"
 
@@ -64,6 +64,7 @@ custom=false
 optflags=
 lexflags=-q
 yaccflags=-q
+cflags=
 
 exec_env=
 args=
@@ -102,8 +103,18 @@ generate_lex_yacc () {
 compile_c_files () {
     Pofile=
     for f in $c_files; do
-        launch $NATIVECC $NATIVECCCOMPOPTS -c -I $CTOPDIR/byterun $f
+        launch $NATIVECC $NATIVECCCOMPOPTS $cflags -c -I $CTOPDIR/byterun $f
         Pofiles="$Pofile ${f%.c}.o"
+    done
+}
+
+native_suffix () {
+    for i in $*; do
+        case $i in
+            *.cmo) echo ${i%.cmo}.cmx;;
+            *.cma) echo ${i%.cma}.cmxa;;
+            *) echo "error in $base.t: bad value for libs: $i" >&2
+        esac
     done
 }
 
@@ -111,30 +122,17 @@ byte_comp () {
     preprocess
     generate_lex_yacc
     compile_c_files
-    if $with_testlib; then
-        include="-I $TOPDIR/testsuite/lib"
-        libcmo=testing.cmo
-    else
-        include=
-        libcmo=
-    fi
     launch $Pocamlc $compflags $Pcustomflag $byteflags $Pofiles \
-           $include $libcmo $mli_files $ml_files -o $byte_exec
+           $libs $mli_files $ml_files -o $byte_exec
 }
 
 opt_comp () {
     preprocess
     generate_lex_yacc
     compile_c_files
-    if $with_testlib; then
-        include="-I $TOPDIR/testsuite/lib"
-        libcmx=testing.cmx
-    else
-        include=
-        libcmx=
-    fi
+    libs="$(native_suffix $libs)"
     launch $Pocamlopt $compflags $optflags $Pofiles \
-           $include $libcmx $mli_files $ml_files -o $opt_exec
+           $libs $mli_files $ml_files -o $opt_exec
 }
 
 byte_run () {

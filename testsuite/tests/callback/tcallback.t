@@ -10,5 +10,7 @@
 #                                                                       #
 #########################################################################
 
-optflags='-inline 20'
-libs=testing.cmo
+c_files=callbackprim.c
+custom=true
+compflags="-I $OTOPDIR/otherlibs/unix"
+libs=unix.cma

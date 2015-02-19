@@ -10,5 +10,5 @@
 #                                                                       #
 #########################################################################
 
-optflags='-inline 20'
-libs=testing.cmo
+mli_files=length.mli
+ml_files='length.ml tlength.ml'

@@ -10,5 +10,5 @@
 #                                                                       #
 #########################################################################
 
-optflags='-inline 20'
-libs=testing.cmo
+mli_files=multdef.mli
+ml_files='multdef.ml usemultdef.ml'
