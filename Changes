@@ -27,11 +27,15 @@ Compilers:
   (Frédéric Bour, review by Gabriel Scherer)
 - PR#6737: fix Typedtree attributes on (fun x -> body) expressions
 - PR#6679: fix pprintast printing of constraints in type declarations
+- some cmm optimizations of integer operations with constants
+  (Stephen Dolan, review by Pierre Chambart)
 
 Runtime system:
 - PR#6517: use ISO C99 types {,u}int{32,64}_t in preference to our homegrown
   types {,u}int{32,64}.
   (Xavier Leroy)
+- PR#6760: closures evaluated in the toplevel can now be marshalled
+  (Peter Zotov, review by Jacques-Henri Jourdan)
 
 Standard library:
 * PR#6494: Add equal function in modules
@@ -55,15 +59,23 @@ Type system:
   type through inference, but no breakage known on published code.
 - PR#6593: Functor application in tests/basic-modules fails after commit 15405
 
+Toplevel and debugger:
+- PR#6468: toplevel now supports backtraces if invoked with OCAMLRUNPARAM=b
+  (Peter Zotov and Jake Donham,
+   review by Gabriel Scherer and Jacques-Henri Jourdan)
+
 Bug fixes:
 * PR#4539: change exception string raised when comparing functional values
   (Nicolas Braud-Santoni, report by Eric Cooper)
 - PR#5887: move the byterun/*.h headers to byterun/caml/*.h to avoid header
     name clashes
   (Jérôme Vouillon and Adrien Nader and Peter Zotov)
-* PR#6081: ocaml should add script's directory to search path, not current directory
+* PR#6081: ocaml should add script's directory to search path, not current
+    directory
   (Thomas Leonard and Damien Doligez)
 - PR#6171: Error message confusing when a type escapes its scope.
+- PR#6340: Incorrect handling of \r when processing "Windows" source files
+  (Damien Doligez, report by David Allsopp)
 - PR#6526: ocamllex warning: unescaped newline in comment string
   (Damien Doligez, report by user 'dhekir')
 - PR#6560: Wrong failure message for {Int32,Int64,NativeInt}.of_string
@@ -83,6 +95,7 @@ Features wishes:
 - PR#6691: install .cmt[i] files for stdlib and compiler-libs
   (David Sheets, request by Gabriel Radanne)
 - PR#6742: remove duplicate virtual_flag information from Tstr_class
+- GPR#142: add a CAMLdrop macro for undoing CAMLparam*/CAMLlocal*
 
 OCaml 4.02.2:
 -------------
@@ -92,6 +105,8 @@ Compilers:
   (Vincent Laporte, Peter Zotov)
 - PR#6600: make -short-paths faster by building the printing map
   incrementally (Jacques Garrigue)
+- PR#6642: replace $CAMLORIGIN in -ccopt with the path to cma or cmxa
+  (Peter Zotov, Gabriel Scherer, review by Damien Doligez)
 
 Toplevel and debugger:
 - PR#5958: generalized polymorphic #install_printer
@@ -135,6 +150,14 @@ Bug fixes:
   (Gabriel Scherer, report by Peter Zotov)
 - PR#6727: Printf.sprintf "%F" misbehavior
   (Benoît Vaugon, report by Vassili Karpov)
+- PR#6749: ocamlopt returns n for (n mod 1) instead of 0
+  (Mark Shinwell and Jérémie Dimino)
+- PR#6763: #show with -short-paths doesn't select shortest type paths
+- PR#6768: Typechecker overflow the stack on cyclic type
+- PR#6775: Digest.file leaks file descriptor on error
+  (Valentin Gatien-Baron)
+- GPR#143: fix getsockopt behaviour for boolean socket options
+  (Anil Madhavapeddy and Andrew Ray)
 - ocamlbuild on cygwin cannot find ocamlfind
   (user 'algoriddle')
 - allow android build with pthreads support (since SDK r10c)

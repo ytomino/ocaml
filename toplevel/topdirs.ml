@@ -86,11 +86,19 @@ let load_compunit ic filename ppf compunit =
   let initial_symtable = Symtable.current_state() in
   Symtable.patch_object code compunit.cu_reloc;
   Symtable.update_global_table();
+  let events =
+    if compunit.cu_debug = 0 then [| |]
+    else begin
+      seek_in ic compunit.cu_debug;
+      [| input_value ic |]
+    end in
+  Meta.add_debug_info code code_size events;
   begin try
     may_trace := true;
     ignore((Meta.reify_bytecode code code_size) ());
     may_trace := false;
   with exn ->
+    record_backtrace ();
     may_trace := false;
     Symtable.restore_state initial_symtable;
     print_exception_outcome ppf exn;
@@ -424,7 +432,8 @@ let show_prim to_sig ppf lid =
     in
     let id = Ident.create_persistent s in
     let sg = to_sig env loc id lid in
-    fprintf ppf "@[%a@]@." Printtyp.signature sg
+    Printtyp.wrap_printing_env env
+      (fun () -> fprintf ppf "@[%a@]@." Printtyp.signature sg)
   with
   | Not_found ->
       fprintf ppf "@[Unknown element.@]@."
