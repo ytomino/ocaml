@@ -16,10 +16,13 @@
 
 Pwith_byte=true
 Pwith_opt=true
-case $1 in
-    -byteonly) Pwith_opt=false; shift;;
-    -optonly) Pwith_byte=false; shift;;
-esac
+while : ; do
+    case $1 in
+        -no-byte) Pwith_byte=false; shift;;
+        -no-opt) Pwith_opt=false; shift;;
+        *) break;;
+    esac
+done
 
 Pfile=$1
 Pdir=$(dirname $1)

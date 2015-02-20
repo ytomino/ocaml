@@ -15,19 +15,19 @@
 # make
 #   run all tests
 #
-# make { all | byte | opt }
-#   run all tests, only byte-code tests, or only native-code tests
+# make { all | byte | opt | none }
+#   run all tests, only byte-code tests, only native-code tests, or no tests
 #
-# make [ all | byte | opt ] file=<f>
+# make [ all | byte | opt | none ] file=<f>
 #   run tests in all the directories listed in file <f>
 #
-# make [ all | byte | opt ] dir=<d>
+# make [ all | byte | opt | none ] dir=<d>
 #   run tests in directory <d>
 #
-# make [ all | byte | opt ] dir=<file>.t
+# make [ all | byte | opt | none ] dir=<file>.t
 #   run the tests described by <file>.t
 #
-# make [ all | byte | opt ] dir="<d1> ... <dn> <f1>.t ... <fn>.t"
+# make [ all | byte | opt | none ] dir="<d1> ... <dn> <f1>.t ... <fn>.t"
 #   run tests in the directories <d1> to <dn> and in files <f1>.t ... <fn>.t
 
 ifeq "$(file)" ""
@@ -88,13 +88,18 @@ byte:
 	rm -f _log _full-log
 	$(MAKE) clean >>_full-log 2>&1
 	$(MAKE) -C lib byte >>_full-log 2>&1
-	./scripts/do_tests -byteonly $(dir)
+	./scripts/do_tests -no-opt $(dir)
 
 opt:
 	rm -f _log _full-log
 	$(MAKE) clean >>_full-log 2>&1
 	$(MAKE) -C lib opt >>_full-log 2>&1
-	./scripts/do_tests -optonly $(dir)
+	./scripts/do_tests -no-byte $(dir)
+
+none:
+	rm -f _log _full-log
+	$(MAKE) clean >>_full-log 2>&1
+	./scripts/do_tests -no-byte -no-opt $(dir)
 
 .PHONY: clean
 clean:
