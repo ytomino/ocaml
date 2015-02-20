@@ -15,7 +15,7 @@ kinds=opt
 cbase=$base
 opt_comp () {
     log $MAKE all $cbase.o
-    log $NATIVECC -o $opt_exec $cflags $cbase.o $ARCH.o
+    log $NATIVECC $NATIVECCCOMPOPTS -g -o $opt_exec $cflags $cbase.o $ARCH.o
     launch :
 }
 
