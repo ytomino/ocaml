@@ -53,3 +53,6 @@
 
 .f.o:
 	$(FORTRAN_COMPILER) -c -I$(CTOPDIR)/byterun $*.f -o $*.$(O)
+
+clean::
+	rm -f *.cm[iox] *.$(O)
