@@ -179,7 +179,7 @@ Pcompare_files () {
     ref="$1"
     act="$2"
     if [ ! -f "$ref" ]; then ref=/dev/null; fi
-    log cmp $ref $act
+    log $DIFF $ref $act
 }
 
 Pcheck () {

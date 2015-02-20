@@ -392,7 +392,7 @@ installoptopt:
 # Run all tests
 
 tests: opt.opt
-	cd testsuite; $(MAKE) clean && $(MAKE) all
+	cd testsuite && $(MAKE)
 
 # The clean target
 

@@ -42,7 +42,7 @@ WINTOPDIR=$(shell cygpath -m $(TOPDIR))
 OTOPDIR=$(TOPDIR)
 CTOPDIR=$(TOPDIR)
 CYGPATH=echo
-DIFF=diff -q
+DIFF=diff
 CANKILL=true
 SORT=sort
 SET_LD_PATH=CAML_LD_LIBRARY_PATH="$(LD_PATH)"
@@ -54,7 +54,7 @@ SET_LD_PATH=CAML_LD_LIBRARY_PATH="$(LD_PATH)"
 #   arguments given to the C and Fortran compilers.
 # CYGPATH is the command that translates unix-style file names into
 #   whichever syntax is appropriate for arguments of OCaml programs.
-# DIFF is a "diff -q" command that ignores trailing CRs under Windows.
+# DIFF is a "diff" command that ignores trailing CRs under Windows.
 # CANKILL is true if a script launched by Make can kill an OCaml process,
 #   and false for the mingw and MSVC ports.
 # SORT is the Unix "sort" command. Usually a simple command, but may be an
