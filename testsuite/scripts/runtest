@@ -59,6 +59,7 @@ custom=false
 optflags=
 lexflags=-q
 yaccflags=-q
+topflags=
 cflags=
 
 exec_env=
@@ -76,7 +77,6 @@ error () {
 
 # Log the command given as argument(s) and execute it, saving the outputs
 launch () {
-    pwd
     echo "$*" >&2
     Ltmpexit=0
     Lstg=${Pstage:+-$Pstage}
@@ -125,6 +125,12 @@ precompile () {
     done
 }
 
+opt_comp () {
+    preprocess
+    precompile cmx cmxa
+    launch $Pocamlopt $compflags $optflags $Pocamlfiles -o $opt_exec
+}
+
 byte_comp () {
     preprocess
     precompile cmo cma
@@ -132,10 +138,16 @@ byte_comp () {
         -o $byte_exec
 }
 
-opt_comp () {
-    preprocess
-    precompile cmx cmxa
-    launch $Pocamlopt $compflags $optflags $Pocamlfiles -o $opt_exec
+top_comp () {
+    launch : no compilation
+}
+
+top_principal_comp () {
+    launch : no compilation
+}
+
+opt_run () {
+    launch $exec_env ./$opt_exec $args
 }
 
 byte_run () {
@@ -147,32 +159,14 @@ byte_run () {
     launch $exec_env $Luseruntime ./$byte_exec $args
 }
 
-opt_run () {
-    launch $exec_env ./$opt_exec $args
+top_run () {
+    launch "cat $sources | TERM=dumb $Pocaml $topflags 2>&1 \
+            | grep -v '^        OCaml version'"
 }
 
-postprocess_out () {
-    cp $1 $1.post
-}
-
-byte_postprocess_out () {
-    postprocess_out
-}
-
-opt_postprocess_out () {
-    postprocess_out
-}
-
-postprocess_err () {
-    cp $1 $1.post
-}
-
-opt_postprocess_err () {
-    postprocess_err
-}
-
-opt_postprocess_err () {
-    postprocess_err
+top_principal_run () {
+    launch "cat $sources | TERM=dumb $Pocaml $topflags -principal 2>&1 \
+            | grep -v '^        OCaml version'"
 }
 
 postprocess_sort () {
@@ -196,10 +190,14 @@ Pcheck () {
     else
         post=
     fi
+    case $kind in
+        *_*) variant=-${kind#*_};;
+        *) variant=;;
+    esac
     (
         set -e
         for suff in -comp.refout -comp.referr .refout$post .referr$post; do
-            Pcompare_files $base$suff _tmp/$base-$kind$suff
+            Pcompare_files $base$variant$suff _tmp/$base-$kind$suff
         done
         [ "$Pcompexit" -eq "$compexit" ] || {
             error "compilation exit code $Pcompexit is different" \
@@ -217,6 +215,7 @@ Pcheck_kind () {
     case $kind/$Pwith_opt/$Pwith_byte in
         opt/false/*) false;;
         byte/*/false) false;;
+        top*/*/false) false;;  # top is a subset of byte
         *) true;;
     esac
 }
@@ -234,6 +233,10 @@ opt_precheck () {
 }
 
 byte_precheck () {
+    precheck
+}
+
+top_precheck () {
     precheck
 }
 
@@ -293,7 +296,7 @@ for kind in $kinds; do
         Pcheck_kind || Pskip_test
         # Run user-defined pre-check
         ${kind}_precheck || Pskip_test
-        rm -f _tmp/$base{-comp,,-post}.ref{out,err}
+        rm -f _tmp/$base*.ref{out,err}
         (
             Pstage=comp
             ${kind}_comp
