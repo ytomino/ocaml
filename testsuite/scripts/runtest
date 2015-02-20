@@ -150,7 +150,7 @@ top_principal_comp () {
 }
 
 opt_run () {
-    launch $exec_env ./$opt_exec $args
+    launch $SET_LD_PATH $exec_env ./$opt_exec $args
 }
 
 byte_run () {
@@ -159,7 +159,7 @@ byte_run () {
         -custom) Luseruntime=;;
         *) error "internal error (bad value for Pcustomflag)";;
     esac
-    launch $exec_env $Luseruntime ./$byte_exec $args
+    launch $SET_LD_PATH $exec_env $Luseruntime ./$byte_exec $args
 }
 
 top_run () {
@@ -199,7 +199,7 @@ Pcheck () {
     esac
     (
         set -e
-        for suff in -comp.refout -comp.referr .refout$post .referr$post; do
+        for suff in -comp.referr -comp.refout .referr$post .refout$post; do
             Pcompare_files $base$variant$suff _tmp/$base-$kind$suff
         done
         [ "$Pcompexit" -eq "$compexit" ] || {
