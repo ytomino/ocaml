@@ -10,4 +10,4 @@
 #                                                                       #
 #########################################################################
 
-ml_files="offset.ml pr6726.ml main.ml"
+sources='offset.ml pr6726.ml main.ml'

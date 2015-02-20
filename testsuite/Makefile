@@ -12,22 +12,28 @@
 
 # usage:
 #
-# make file=<f>
+# make
+#   run all tests
+#
+# make { all | byte | opt }
+#   run all tests, only byte-code tests, or only native-code tests
+#
+# make [ all | byte | opt ] file=<f>
 #   run tests in all the directories listed in file <f>
 #
-# make dir=<d>
+# make [ all | byte | opt ] dir=<d>
 #   run tests in directory <d>
 #
-# make dir=<file>.t
+# make [ all | byte | opt ] dir=<file>.t
 #   run the tests described by <file>.t
 #
-# make dir="<d1> ... <dn> <f1>.t ... <fn>.t"
+# make [ all | byte | opt ] dir="<d1> ... <dn> <f1>.t ... <fn>.t"
 #   run tests in the directories <d1> to <dn> and in files <f1>.t ... <fn>.t
 
-ifeq "${file}" ""
+ifeq "$(file)" ""
   dir=tests
 else
-  dir=$(shell cat ${file})
+  dir=$(shell cat $(file))
 endif
 
 #########################################################################
@@ -67,52 +73,32 @@ SET_LD_PATH=CAML_LD_LIBRARY_PATH="$(LD_PATH)"
 include $(TOPDIR)/config/Makefile
 
 # Transmit Makefile configuration variables to the test scripts
-ENV = TOPDIR='$(TOPDIR)' \
-      UNIXLIB='$(UNIXLIB)' \
-      EXE='$(EXE)' \
-      SUPPORTS_SHARED_LIBRARIES='$(SUPPORTS_SHARED_LIBRARIES)' \
-      ARCH='$(ARCH)' \
-      SYSTEM='$(SYSTEM)' \
-      NATIVECC='$(NATIVECC)' \
-      NATIVECCCOMPOPTS='$(NATIVECCCOMPOPTS)' \
-      ASM='$(ASM)' \
-      ASPP='$(ASPP)' \
-      OTHERLIBRARIES='$(OTHERLIBRARIES)' \
-      O='$(O)' \
-      A='$(A)' \
-      SO='$(SO)' \
-      BYTECC='$(BYTECC)' \
-      OTOPDIR='$(OTOPDIR)' \
-      CTOPDIR='$(CTOPDIR)' \
-      CYGPATH='$(CYGPATH)' \
-      DIFF='$(DIFF)' \
-      CANKILL='$(CANKILL)' \
-      SORT='$(SORT)' \
-      SET_LD_PATH='$(SET_LD_PATH)' \
-      MAKE='$(MAKE)'
+unexport WINTOPDIR
+export
+export MAKE
 
 .PHONY: all
 all:
-	@rm -f _log _full-log
-	@$(MAKE) clean >>_full-log 2>&1
-	@$(ENV) $(MAKE) -C lib byte opt >>_full-log 2>&1
-	@$(ENV) ./scripts/do_tests $(dir)
+	rm -f _log _full-log
+	$(MAKE) clean >>_full-log 2>&1
+	$(MAKE) -C lib byte opt >>_full-log 2>&1
+	./scripts/do_tests $(dir)
 
 byte:
-	@rm -f _log _full-log
-	@$(MAKE) clean >>_full-log 2>&1
-	@$(ENV) $(MAKE) -C lib byte >>_full-log 2>&1
-	@$(ENV) ./scripts/do_tests -byteonly $(dir)
+	rm -f _log _full-log
+	$(MAKE) clean >>_full-log 2>&1
+	$(MAKE) -C lib byte >>_full-log 2>&1
+	./scripts/do_tests -byteonly $(dir)
 
 opt:
-	@rm -f _log _full-log
-	@$(MAKE) clean >>_full-log 2>&1
-	@$(ENV) $(MAKE) -C lib opt >>_full-log 2>&1
-	@$(ENV) ./scripts/do_tests -optonly $(dir)
+	rm -f _log _full-log
+	$(MAKE) clean >>_full-log 2>&1
+	$(MAKE) -C lib opt >>_full-log 2>&1
+	./scripts/do_tests -optonly $(dir)
 
 .PHONY: clean
 clean:
-	$(ENV) scripts/do_clean tests
+	scripts/do_clean tests
 
 #####
 # For compatibility with the old test makefile
@@ -127,7 +113,8 @@ one:
 
 .PHONY: promote
 promote:
-	@echo '"make promote" is deprecated, you must promote by hand'
+	echo '"make promote" is deprecated, you must promote by hand'
+	exit 2
 
 .PHONY: lib
 lib:

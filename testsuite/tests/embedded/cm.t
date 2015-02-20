@@ -10,6 +10,5 @@
 #                                                                       #
 #########################################################################
 
-. Testcommon.sh
-sources=backtrace.ml
-kinds='byte opt'
+kinds=byte
+sources='cmstub.c cmcaml.ml cmmain.c'

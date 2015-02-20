@@ -49,12 +49,7 @@ else
   config_custom=true
 fi
 
-ml_files="$base.ml"
-mli_files=
-mll_files=
-mly_files=
-c_files=
-libs=
+sources="$base.ml"
 
 kinds="byte opt"
 
@@ -73,70 +68,83 @@ compexit=0
 postprocess=false
 postexit=0
 
-# Log the command and execute it, saving the outputs
+# Print the error message to stderr and exit with an error code.
+error () {
+    echo ERROR: $* >&2
+    exit 5
+}
+
+# Log the command given as argument(s) and execute it, saving the outputs
 launch () {
     pwd
     echo "$*" >&2
-    Ptmpexit=0
-    Pstg=${Pstage:+-$Pstage}
-    eval "$*" </dev/null >>_tmp/$base-$kind$Pstg.refout \
-         2>>_tmp/$base-$kind$Pstg.referr \
-      || Ptmpexit=$?
-    eval "P${Pstage}exit=$Ptmpexit"
+    Ltmpexit=0
+    Lstg=${Pstage:+-$Pstage}
+    eval "$*" </dev/null >>_tmp/$base-$kind$Lstg.refout \
+         2>>_tmp/$base-$kind$Lstg.referr \
+      || Ltmpexit=$?
+    eval "P${Pstage}exit=$Ltmpexit"
 }
 
-# Log the command and execute it, leaving the outputs alone
+# Log the command given as argument(s) and execute it, leaving the outputs alone
 log () {
     echo "$*" >&2
     eval "$*"
 }
 
-generate_lex_yacc () {
-    for f in $mll_files; do
-        launch $Plex $lexflags $f
-    done
-    for f in $mly_files; do
-        launch $Pyacc $yaccflags $f
-    done
-}
-
-compile_c_files () {
-    Pofile=
-    for f in $c_files; do
-        launch $NATIVECC $NATIVECCCOMPOPTS $cflags -c -I $CTOPDIR/byterun $f
-        Pofiles="$Pofile ${f%.c}.o"
-    done
-}
-
-native_suffix () {
-    for i in $*; do
-        case $i in
-            *.cmo) echo ${i%.cmo}.cmx;;
-            *.cma) echo ${i%.cma}.cmxa;;
-            *) echo "error in $base.t: bad value for libs: $i" >&2
+# Compile mlyacc, mllex and C files, and build a list of files for the
+# OCaml compiler to compile and link.
+# Two arguments: the extensions to use for library objects (cmo/cmx) and
+#   libs (cma/cmxa).
+precompile () {
+    cmoext=$1
+    cmaext=$2
+    Pocamlfiles=
+    for f in $sources; do
+        case $f in
+            *.ml|*.mli)
+                Pocamlfiles="$Pocamlfiles $f";;
+            *.mly)
+                launch $Pyacc $yaccflags $f
+                Pocamlfiles="$Pocamlfiles ${f%.mly}.mli ${f%.mly}.ml";;
+            *.mll)
+                launch $Plex $lexflags $f
+                Pocamlfiles="$Pocamlfiles ${f%.mll}.ml";;
+            *.c)
+                launch $NATIVECC $NATIVECCCOMPOPTS $cflags \
+                    -I $CTOPDIR/byterun -c $f
+                Pcustomflag=-custom
+                Pocamlfiles="$Pocamlfiles ${f%.c}.$O";;
+            *.cmo) Pocamlfiles="$Pocamlfiles ${f%.cmo}.$cmoext";;
+            *.cma) Pocamlfiles="$Pocamlfiles ${f%.cma}.$cmaext";;
+            *.$O)
+                Pcustomflag=-custom
+                Pocamlfiles="$Pocamlfiles $f";;
+            *) error "unexpected source file extension: $f";;
         esac
     done
 }
 
 byte_comp () {
     preprocess
-    generate_lex_yacc
-    compile_c_files
-    launch $Pocamlc $compflags $Pcustomflag $byteflags $Pofiles \
-           $libs $mli_files $ml_files -o $byte_exec
+    precompile cmo cma
+    launch $Pocamlc $compflags $Pcustomflag $byteflags $Pocamlfiles \
+        -o $byte_exec
 }
 
 opt_comp () {
     preprocess
-    generate_lex_yacc
-    compile_c_files
-    libs="$(native_suffix $libs)"
-    launch $Pocamlopt $compflags $optflags $Pofiles \
-           $libs $mli_files $ml_files -o $opt_exec
+    precompile cmx cmxa
+    launch $Pocamlopt $compflags $optflags $Pocamlfiles -o $opt_exec
 }
 
 byte_run () {
-    launch $exec_env $Puseruntime ./$byte_exec $args
+    case $Pcustomflag in
+        "") Luseruntime=$Pocamlrun;;
+        -custom) Luseruntime=;;
+        *) error "internal error (bad value for Pcustomflag)";;
+    esac
+    launch $exec_env $Luseruntime ./$byte_exec $args
 }
 
 opt_run () {
@@ -194,13 +202,12 @@ Pcheck () {
             Pcompare_files $base$suff _tmp/$base-$kind$suff
         done
         [ "$Pcompexit" -eq "$compexit" ] || {
-            printf "ERROR: compilation exit code %d is different from expected %d\n" \
-                $Pcompexit $compexit
+            error "compilation exit code $Pcompexit is different" \
+                "from expected $compexit"
             false
         }
         [ "$Pexit" -eq "$exit" ] || {
-            printf "ERROR: program exit code %d is different from expected %d\n" \
-                $Pcompexit $compexit
+            error "program exit code $Pexit is different from expected $exit"
             false
         }
     )
@@ -234,6 +241,7 @@ Pexport_variables () {
     export OCAMLYACC="$Pyacc"
     export OCAMLLEX="$Plex"
     export OCAMLC="$Pocamlc"
+    export OCAMLOPT="$Pocamlopt"
     export OCAMLRUN="$Pocamlrun"
 }
 
@@ -267,14 +275,10 @@ cd "$Pdir"
 . ./$base.t
 
 # compute whether to use a custom runtime
-Pcustomflag=
-if $custom; then Pcustomflag=-custom; fi
-if ! $SUPPORTS_SHARED_LIBRARIES; then Pcustomflag=-custom; fi
-if [ -n "$c_files" ]; then Pcustomflag=-custom; fi
-if [ "$Pcustomflag" = -custom ]; then
-    Puseruntime=
+if $custom || ! $SUPPORTS_SHARED_LIBRARIES; then
+    Pcustomflag=-custom
 else
-    Puseruntime=$Pocamlrun
+    Pcustomflag=
 fi
 
 ######################################################

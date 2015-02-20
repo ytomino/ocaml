@@ -10,5 +10,4 @@
 #                                                                       #
 #########################################################################
 
-mli_files=multdef.mli
-ml_files='multdef.ml usemultdef.ml'
+sources='multdef.mli multdef.ml usemultdef.ml'

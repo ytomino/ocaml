@@ -10,4 +10,4 @@
 #                                                                       #
 #########################################################################
 
-c_files=manyargsprim.c
+sources='manyargsprim.c manyargs.ml'

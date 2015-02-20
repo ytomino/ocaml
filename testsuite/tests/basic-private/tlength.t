@@ -10,5 +10,4 @@
 #                                                                       #
 #########################################################################
 
-mli_files=length.mli
-ml_files='length.ml tlength.ml'
+sources='length.mli length.ml tlength.ml'

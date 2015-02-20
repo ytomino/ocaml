@@ -11,4 +11,4 @@
 #########################################################################
 
 optflags='-inline 20'
-libs=testing.cmo
+sources="testing.cmo $base.ml"
