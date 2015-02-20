@@ -31,10 +31,9 @@
 *.byt
 *.exe
 *.exe.manifest
+*.exe.dSYM
 _tmp
 
-.depend
-.depend.nt
 .DS_Store
 
 EOF
