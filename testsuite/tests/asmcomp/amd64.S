@@ -31,6 +31,7 @@
         .globl  CALL_GEN_CODE
         .align  ALIGN
 CALL_GEN_CODE:
+        subq    $8, %rsp
         pushq   %rbx
         pushq   %rbp
         pushq   %r12
@@ -49,6 +50,7 @@ CALL_GEN_CODE:
         popq    %r12
         popq    %rbp
         popq    %rbx
+        addq    $8, %rsp
         ret
 
         .globl  CAML_C_CALL
