@@ -46,10 +46,12 @@ if [ "$ARCH" = none -o "$ASM" = none ]; then
   Pwith_opt=false
 fi
 
+# Pcustomflag is set to "-custom" (at several places in this file)
+# as soon as a custom runtime is needed.
 if $SUPPORTS_SHARED_LIBRARIES; then
-  config_custom=false
+  Pcustomflag=
 else
-  config_custom=true
+  Pcustomflag=-custom
 fi
 
 sources="$base.ml"
@@ -64,6 +66,7 @@ lexflags=-q
 yaccflags=-q
 topflags=
 cflags=
+fortranflags=
 
 exec_env=
 args=
@@ -105,24 +108,32 @@ precompile () {
     Pocamlfiles=
     for f in $sources; do
         case $f in
-            *.ml|*.mli)
-                Pocamlfiles="$Pocamlfiles $f";;
+            *.ml|*.mli) Pocamlfiles="$Pocamlfiles $f";;
             *.mly)
                 launch $Pyacc $yaccflags $f
-                Pocamlfiles="$Pocamlfiles ${f%.mly}.mli ${f%.mly}.ml";;
+                Pocamlfiles="$Pocamlfiles ${f%.mly}.mli ${f%.mly}.ml"
+                ;;
             *.mll)
                 launch $Plex $lexflags $f
-                Pocamlfiles="$Pocamlfiles ${f%.mll}.ml";;
+                Pocamlfiles="$Pocamlfiles ${f%.mll}.ml"
+                ;;
             *.c)
                 launch $NATIVECC $NATIVECCCOMPOPTS $cflags \
                     -I $CTOPDIR/byterun -c $f
                 Pcustomflag=-custom
-                Pocamlfiles="$Pocamlfiles ${f%.c}.$O";;
+                Pocamlfiles="$Pocamlfiles ${f%.c}.$O"
+                ;;
+            *.f)
+                launch $FORTRAN_COMPILER $fortranflags -c $f
+                Pcustomflag=-custom
+                Pocamlfiles="$Pocamlfiles ${f%.f}.$O"
+                ;;
             *.cmo) Pocamlfiles="$Pocamlfiles ${f%.cmo}.$cmoext";;
             *.cma) Pocamlfiles="$Pocamlfiles ${f%.cma}.$cmaext";;
             *.$O)
                 Pcustomflag=-custom
-                Pocamlfiles="$Pocamlfiles $f";;
+                Pocamlfiles="$Pocamlfiles $f"
+                ;;
             *) error "unexpected source file extension: $f";;
         esac
     done
@@ -137,16 +148,17 @@ opt_comp () {
 byte_comp () {
     preprocess
     precompile cmo cma
+    if $custom; then Pcustomflag=-custom; fi
     launch $Pocamlc $compflags $Pcustomflag $byteflags $Pocamlfiles \
         -o $byte_exec
 }
 
 top_comp () {
-    launch : no compilation
+    launch : no compilation step needed
 }
 
 top_principal_comp () {
-    launch : no compilation
+    launch : no compilation step needed
 }
 
 opt_run () {
@@ -228,7 +240,9 @@ preprocess () {
 }
 
 precheck () {
-    :
+    case "$sources " in
+        *'.f '*) test -n "$FORTRAN_COMPILER";;
+    esac
 }
 
 opt_precheck () {
@@ -279,13 +293,6 @@ cd "$Pdir"
 # read the user's definitions
 
 . ./$base.t
-
-# compute whether to use a custom runtime
-if $custom || ! $SUPPORTS_SHARED_LIBRARIES; then
-    Pcustomflag=-custom
-else
-    Pcustomflag=
-fi
 
 ######################################################
 
