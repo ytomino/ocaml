@@ -6,6 +6,18 @@ OCaml 4.04.0:
 Language features:
 ==================
 
+- GPR#69: Custom index operators: ( .() ), ( .[] ), ( .{} ) etc.
+  (Florian Angeletti)
+  The syntax "foo.(bar) <- baz" now desugars into "( .()<- ) foo bar baz"; this
+  should allow user to define their own notations by overriding.
+  The bigarray notations ( .{} ), ( .{,} ) etc. are defined in the Bigarray
+  module, which means that the foo.{bar,baz} syntactic sugar should only be
+  available when the Bigarray is opened. To avoid breaking existing program,
+  the compiler emits, for now, a deprecated warning when these Bigarray
+  operators are used implicitly. Opening either the Bigarray.Operators or
+  Bigarray modules fixes this compatibility problem.
+
+
 - GPR#301: local exception declarations "let exception ... in"
   (Alain Frisch)
 
