@@ -60,7 +60,7 @@ CAMLprim value unix_execvpe(value path, value args, value env)
 
 CAMLprim value unix_execvpe(value path, value args, value env)
 {
-  unix_error("execvpe", ENOSYS, path);
+  unix_error(ENOSYS, "execvpe", path);
   return Val_unit;
 }
 
