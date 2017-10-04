@@ -4,12 +4,21 @@ ADD_COMPFLAGS=-I $(OTOPDIR)/otherlibs/$(UNIXLIBVAR)unix
 LD_PATH=$(TOPDIR)/otherlibs/$(UNIXLIBVAR)unix
 MAIN_MODULE=exec
 
-.PHONY: test
+include $(BASEDIR)/../config/Makefile
+
+ifeq ($(UNIX_OR_WIN32),unix)
+
 test:
 	@$(MAKE) compile
 	@$(SET_LD_PATH) $(MAKE) myrun
 
-.PHONY: myrun
+else
+
+skip:
+	@echo " ... testing => skipped (not on Unix)"
+
+endif
+
 myrun:
 	@printf " ... testing with"
 	@if $(NATIVECODE_ONLY); then : ; else \

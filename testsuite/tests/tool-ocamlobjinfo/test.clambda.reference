@@ -13,6 +13,7 @@ Interfaces imported:
 	<MD5>	Pervasives
 	<MD5>	List
 	<MD5>	Hashtbl
+	<MD5>	Filename
 	<MD5>	Complex
 	<MD5>	CamlinternalFormatBasics
 	<MD5>	CamlinternalBigarray
@@ -22,11 +23,13 @@ Interfaces imported:
 	<MD5>	Array
 Implementations imported:
 	<MD5>	Sys
+	<MD5>	String
 	<MD5>	Printf
 	<MD5>	Printexc
 	<MD5>	Pervasives
 	<MD5>	List
 	<MD5>	Hashtbl
+	<MD5>	Filename
 	<MD5>	Callback
 	<MD5>	Bytes
 	<MD5>	Array
