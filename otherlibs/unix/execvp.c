@@ -19,6 +19,7 @@
 #define CAML_INTERNALS
 #include <caml/osdeps.h>
 #include "unixsupport.h"
+#include "errno.h"
 
 CAMLprim value unix_execvp(value path, value args)
 {
